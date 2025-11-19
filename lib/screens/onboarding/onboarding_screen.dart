@@ -17,7 +17,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   final List<OnboardingPageData> _pages = [
     OnboardingPageData(
       imageUrl: 'assets/images/onboarding_1_watch.png',
-      title: 'Pantau Kesehatanmu Setiap Saat',
+      title: 'Pantau Kesehatanmu Setiap Saat.',
     ),
     OnboardingPageData(
       imageUrl: 'assets/images/onboarding_2_map.png',

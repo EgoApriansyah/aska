@@ -1,8 +1,10 @@
+// lib/screens/auth/login_screen.dart
 import 'package:flutter/material.dart';
 import '../../constants/app_colors.dart';
 import '../../constants/app_styles.dart';
 import '../../constants/app_routes.dart';
 import '../../services/auth_service.dart';
+import '../../widgets/common/aska_logo_widget.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({Key? key}) : super(key: key);
@@ -23,23 +25,26 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('MASUK', style: TextStyle(color: AppColors.textDark)),
-        backgroundColor: AppColors.white,
-        elevation: 0,
-        iconTheme: const IconThemeData(color: AppColors.textDark),
-      ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24.0),
         child: Column(
           children: [
-            const SizedBox(height: 20),
+            const SizedBox(height: 100),
 
-            // Email Input
+            // Logo ASKA di tengah
+            Image.asset(
+              'assets/images/aska2.png',
+              height: 100, // Tinggi default
+              fit: BoxFit.contain,
+            ),
+
+            const SizedBox(height: 40),
+
+            // Email/Phone Input
             TextField(
               controller: emailController,
               decoration: AppStyles.inputDecoration.copyWith(
-                hintText: 'Alamat Email',
+                hintText: 'Alamat Email/ No. Handphone',
                 prefixIcon: const Icon(Icons.person_outline),
               ),
             ),
@@ -70,7 +75,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
             const SizedBox(height: 10),
 
-            // Forgot Password (opsional)
+            // Forgot Password
             Align(
               alignment: Alignment.centerRight,
               child: TextButton(
@@ -81,7 +86,91 @@ class _LoginScreenState extends State<LoginScreen> {
 
             const SizedBox(height: 20),
 
-            // GOOGLE BUTTON (belum aktif)
+            // LOGIN BUTTON dengan shadow
+            SizedBox(
+              width: double.infinity,
+              height: 50,
+              child: ElevatedButton(
+                onPressed: isLoading
+                    ? null
+                    : () async {
+                        setState(() => isLoading = true);
+
+                        final result = await _authService.login(
+                          email: emailController.text.trim(),
+                          password: passwordController.text.trim(),
+                        );
+
+                        setState(() => isLoading = false);
+
+                        if (result != null) {
+                          // SUCCESS
+                          Navigator.pushReplacementNamed(
+                            context,
+                            AppRoutes.home,
+                          );
+                        } else {
+                          // FAILED
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text("Email atau password salah"),
+                            ),
+                          );
+                        }
+                      },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(25),
+                  ),
+                  elevation: 5,
+                  shadowColor: Colors.black.withOpacity(0.3),
+                ),
+                child: isLoading
+                    ? const CircularProgressIndicator(color: Colors.white)
+                    : const Text('Masuk', style: AppStyles.primaryButtonText),
+              ),
+            ),
+
+            const SizedBox(height: 30),
+
+            // SIGN UP LINK
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Text('Belum Memiliki Akun?'),
+                TextButton(
+                  onPressed: () {
+                    Navigator.pushNamed(context, AppRoutes.signup);
+                  },
+                  child: const Text(
+                    'Daftar/ Aktifasi',
+                    style: AppStyles.linkText,
+                  ),
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 30),
+
+            // Divider
+            Row(
+              children: <Widget>[
+                const Expanded(child: Divider()),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 10.0),
+                  child: Text(
+                    "ATAU",
+                    style: TextStyle(color: Colors.grey.shade600),
+                  ),
+                ),
+                const Expanded(child: Divider()),
+              ],
+            ),
+
+            const SizedBox(height: 20),
+
+            // GOOGLE BUTTON
             SizedBox(
               width: double.infinity,
               height: 50,
@@ -117,81 +206,7 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
             ),
 
-            const SizedBox(height: 30),
-
-            // Divider
-            Row(children: <Widget>[
-              const Expanded(child: Divider()),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 10.0),
-                child: Text(
-                  "ATAU",
-                  style: TextStyle(color: Colors.grey.shade600),
-                ),
-              ),
-              const Expanded(child: Divider()),
-            ]),
-
-            const SizedBox(height: 30),
-
-            // LOGIN BUTTON
-            SizedBox(
-              width: double.infinity,
-              height: 50,
-              child: ElevatedButton(
-                onPressed: isLoading
-                    ? null
-                    : () async {
-                        setState(() => isLoading = true);
-
-                        final result = await _authService.login(
-                          email: emailController.text.trim(),
-                          password: passwordController.text.trim(),
-                        );
-
-                        setState(() => isLoading = false);
-
-                        if (result != null) {
-                          // SUCCESS
-                          Navigator.pushReplacementNamed(
-                              context, AppRoutes.home);
-                        } else {
-                          // FAILED
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                                content:
-                                    Text("Email atau password salah")),
-                          );
-                        }
-                      },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(25),
-                  ),
-                ),
-                child: isLoading
-                    ? const CircularProgressIndicator(color: Colors.white)
-                    : const Text('Masuk', style: AppStyles.primaryButtonText),
-              ),
-            ),
-
-            const SizedBox(height: 30),
-
-            // SIGN UP LINK
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Text('Belum Memiliki Akun?'),
-                TextButton(
-                  onPressed: () {
-                    Navigator.pushNamed(context, AppRoutes.signup);
-                  },
-                  child: const Text('Daftar/ Aktifasi',
-                      style: AppStyles.linkText),
-                ),
-              ],
-            ),
+            const SizedBox(height: 20),
           ],
         ),
       ),
