@@ -1,6 +1,6 @@
+// lib/screens/onboarding/onboarding_screen.dart
 import 'package:flutter/material.dart';
 import 'widgets/onboarding_page_widget.dart';
-import '../../constants/app_colors.dart';
 import '../../constants/app_routes.dart';
 
 class OnboardingScreen extends StatefulWidget {
@@ -32,74 +32,52 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Stack(
-        children: [
-          PageView.builder(
-            controller: _pageController,
-            itemCount: _pages.length,
-            onPageChanged: (int page) {
-              setState(() {
-                _currentPage = page;
-              });
-            },
-            itemBuilder: (context, index) {
-              return OnboardingPageWidget(
-                data: _pages[index],
-                isLastPage: index == _pages.length - 1,
-                onNextPressed: () {
-                  if (_currentPage < _pages.length - 1) {
-                    _pageController.nextPage(
-                      duration: const Duration(milliseconds: 300),
-                      curve: Curves.easeInOut,
-                    );
-                  } else {
-                    // *** PERUBAHAN KUNCI: Navigasi ke Login setelah onboarding selesai ***
-                    Navigator.pushReplacementNamed(context, AppRoutes.login);
-                  }
-                },
-                onSkipPressed: () {
-                  // Opsional: "Kembali" bisa juga langsung ke login
-                  Navigator.pushReplacementNamed(context, AppRoutes.login);
-                },
-              );
-            },
-          ),
-          // Page Indicator
-          Positioned(
-            bottom: 40,
-            left: 0,
-            right: 0,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: _pages.asMap().entries.map((entry) {
-                return AnimatedContainer(
+      body: PageView.builder(
+        controller: _pageController,
+        itemCount: _pages.length,
+        onPageChanged: (int page) {
+          setState(() {
+            _currentPage = page;
+          });
+        },
+        itemBuilder: (context, index) {
+          return OnboardingPageWidget(
+            data: _pages[index],
+            isLastPage: index == _pages.length - 1,
+            isFirstPage: index == 0,
+            currentPage: index,
+            totalPages: _pages.length,
+            onNextPressed: () {
+              if (_currentPage < _pages.length - 1) {
+                _pageController.nextPage(
                   duration: const Duration(milliseconds: 300),
-                  width: _currentPage == entry.key ? 24.0 : 8.0,
-                  height: 8.0,
-                  margin: const EdgeInsets.symmetric(horizontal: 4.0),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(12),
-                    color: _currentPage == entry.key
-                        ? AppColors.primary
-                        : AppColors.grey.withOpacity(0.5),
-                  ),
+                  curve: Curves.easeInOut,
                 );
-              }).toList(),
-            ),
-          ),
-        ],
+              } else {
+                Navigator.pushReplacementNamed(context, AppRoutes.login);
+              }
+            },
+            onBackPressed: () {
+              if (_currentPage > 0) {
+                _pageController.previousPage(
+                  duration: const Duration(milliseconds: 300),
+                  curve: Curves.easeInOut,
+                );
+              }
+            },
+            onSkipPressed: () {
+              Navigator.pushReplacementNamed(context, AppRoutes.login);
+            },
+          );
+        },
       ),
     );
   }
 }
 
-// ... (class OnboardingPageData tetap sama)
 class OnboardingPageData {
   final String imageUrl;
   final String title;
 
-  OnboardingPageData({
-    required this.imageUrl,
-    required this.title,
-  });
+  OnboardingPageData({required this.imageUrl, required this.title});
 }

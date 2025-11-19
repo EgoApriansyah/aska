@@ -2,9 +2,23 @@ import 'package:flutter/material.dart';
 import '../../constants/app_colors.dart';
 import '../../constants/app_styles.dart';
 import '../../constants/app_routes.dart';
+import '../../services/auth_service.dart';
 
-class LoginScreen extends StatelessWidget {
+class LoginScreen extends StatefulWidget {
   const LoginScreen({Key? key}) : super(key: key);
+
+  @override
+  State<LoginScreen> createState() => _LoginScreenState();
+}
+
+class _LoginScreenState extends State<LoginScreen> {
+  final TextEditingController emailController = TextEditingController();
+  final TextEditingController passwordController = TextEditingController();
+
+  final AuthService _authService = AuthService();
+
+  bool isLoading = false;
+  bool isPasswordVisible = false;
 
   @override
   Widget build(BuildContext context) {
@@ -20,65 +34,43 @@ class LoginScreen extends StatelessWidget {
         child: Column(
           children: [
             const SizedBox(height: 20),
-            // Google Sign-In Button
-            SizedBox(
-              width: double.infinity,
-              height: 50,
-              child: OutlinedButton.icon(
-                icon: Image.asset('assets/images/google_logo.png', width: 20), // Tambahkan logo Google
-                label: const Text('Masuk dengan Google'),
-                onPressed: () {},
-                style: OutlinedButton.styleFrom(
-                  side: const BorderSide(color: AppColors.lightGrey),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                ),
-              ),
-            ),
-            const SizedBox(height: 15),
-            // Facebook Sign-In Button
-            SizedBox(
-              width: double.infinity,
-              height: 50,
-              child: ElevatedButton.icon(
-                icon: Image.asset('assets/images/facebook_logo.png', width: 20), // Tambahkan logo Facebook
-                label: const Text('Masuk dengan Facebook'),
-                onPressed: () {},
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF1877F2), // Warna Facebook
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                ),
-              ),
-            ),
-            const SizedBox(height: 30),
-            // Divider
-            Row(children: <Widget>[
-              const Expanded(child: Divider()),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 10.0),
-                child: Text("ATAU", style: TextStyle(color: Colors.grey.shade600)),
-              ),
-              const Expanded(child: Divider()),
-            ]),
-            const SizedBox(height: 30),
-            // Email/Phone Input
+
+            // Email Input
             TextField(
+              controller: emailController,
               decoration: AppStyles.inputDecoration.copyWith(
-                hintText: 'Alamat Email/ No. Handphone',
+                hintText: 'Alamat Email',
                 prefixIcon: const Icon(Icons.person_outline),
               ),
             ),
+
             const SizedBox(height: 15),
+
             // Password Input
             TextField(
-              obscureText: true,
+              controller: passwordController,
+              obscureText: !isPasswordVisible,
               decoration: AppStyles.inputDecoration.copyWith(
                 hintText: 'Password',
                 prefixIcon: const Icon(Icons.lock_outline),
-                suffixIcon: const Icon(Icons.visibility_off_outlined),
+                suffixIcon: IconButton(
+                  icon: Icon(
+                    isPasswordVisible
+                        ? Icons.visibility_outlined
+                        : Icons.visibility_off_outlined,
+                  ),
+                  onPressed: () {
+                    setState(() {
+                      isPasswordVisible = !isPasswordVisible;
+                    });
+                  },
+                ),
               ),
             ),
+
             const SizedBox(height: 10),
-            // Forgot Password
+
+            // Forgot Password (opsional)
             Align(
               alignment: Alignment.centerRight,
               child: TextButton(
@@ -86,24 +78,107 @@ class LoginScreen extends StatelessWidget {
                 child: const Text('Lupa Password?', style: AppStyles.linkText),
               ),
             ),
+
             const SizedBox(height: 20),
-            // Login Button
+
+            // GOOGLE BUTTON (belum aktif)
+            SizedBox(
+              width: double.infinity,
+              height: 50,
+              child: OutlinedButton.icon(
+                icon: Image.asset('assets/images/google_logo.png', width: 20),
+                label: const Text('Masuk dengan Google'),
+                onPressed: () {},
+                style: OutlinedButton.styleFrom(
+                  side: const BorderSide(color: AppColors.lightGrey),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 15),
+
+            // FACEBOOK BUTTON
+            SizedBox(
+              width: double.infinity,
+              height: 50,
+              child: ElevatedButton.icon(
+                icon: Image.asset('assets/images/facebook_logo.png', width: 20),
+                label: const Text('Masuk dengan Facebook'),
+                onPressed: () {},
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF1877F2),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 30),
+
+            // Divider
+            Row(children: <Widget>[
+              const Expanded(child: Divider()),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 10.0),
+                child: Text(
+                  "ATAU",
+                  style: TextStyle(color: Colors.grey.shade600),
+                ),
+              ),
+              const Expanded(child: Divider()),
+            ]),
+
+            const SizedBox(height: 30),
+
+            // LOGIN BUTTON
             SizedBox(
               width: double.infinity,
               height: 50,
               child: ElevatedButton(
-                onPressed: () {
-                  Navigator.pushReplacementNamed(context, AppRoutes.home);
-                },
+                onPressed: isLoading
+                    ? null
+                    : () async {
+                        setState(() => isLoading = true);
+
+                        final result = await _authService.login(
+                          email: emailController.text.trim(),
+                          password: passwordController.text.trim(),
+                        );
+
+                        setState(() => isLoading = false);
+
+                        if (result != null) {
+                          // SUCCESS
+                          Navigator.pushReplacementNamed(
+                              context, AppRoutes.home);
+                        } else {
+                          // FAILED
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                                content:
+                                    Text("Email atau password salah")),
+                          );
+                        }
+                      },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primary,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(25),
+                  ),
                 ),
-                child: const Text('Masuk', style: AppStyles.primaryButtonText),
+                child: isLoading
+                    ? const CircularProgressIndicator(color: Colors.white)
+                    : const Text('Masuk', style: AppStyles.primaryButtonText),
               ),
             ),
+
             const SizedBox(height: 30),
-            // Sign Up Link
+
+            // SIGN UP LINK
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
@@ -112,10 +187,11 @@ class LoginScreen extends StatelessWidget {
                   onPressed: () {
                     Navigator.pushNamed(context, AppRoutes.signup);
                   },
-                  child: const Text('Daftar/ Aktifasi', style: AppStyles.linkText),
+                  child: const Text('Daftar/ Aktifasi',
+                      style: AppStyles.linkText),
                 ),
               ],
-            )
+            ),
           ],
         ),
       ),

@@ -1,3 +1,4 @@
+// lib/screens/splash/initial_splash_screen.dart
 import 'package:flutter/material.dart';
 import '../../constants/app_colors.dart';
 import '../../constants/app_styles.dart';
@@ -28,24 +29,20 @@ class _InitialSplashScreenState extends State<InitialSplashScreen>
       vsync: this,
     );
 
-    _imageScale = Tween<double>(begin: 1.1, end: 1.0).animate(
-      CurvedAnimation(
-        parent: _imageController,
-        curve: Curves.easeOut,
-      ),
-    );
+    _imageScale = Tween<double>(
+      begin: 1.1,
+      end: 1.0,
+    ).animate(CurvedAnimation(parent: _imageController, curve: Curves.easeOut));
 
     _logoController = AnimationController(
       duration: const Duration(seconds: 1),
       vsync: this,
     );
 
-    _logoOpacity = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(
-        parent: _logoController,
-        curve: Curves.easeIn,
-      ),
-    );
+    _logoOpacity = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(parent: _logoController, curve: Curves.easeIn));
 
     _imageController.forward();
     _logoController.forward();
@@ -64,15 +61,13 @@ class _InitialSplashScreenState extends State<InitialSplashScreen>
       backgroundColor: AppColors.splashBackground,
       body: SafeArea(
         child: LayoutBuilder(
-          // --- PERUBAHAN UTAMA: Menggunakan LayoutBuilder ---
           builder: (context, constraints) {
-            // Hitung tinggi gambar, misalnya 45% dari tinggi layar yang tersedia
+            // Hitung tinggi gambar, 45% dari tinggi layar yang tersedia
             final double imageHeight = constraints.maxHeight * 0.45;
 
             return Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch, // Lebarkan anak-anak Column
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-
                 AnimatedBuilder(
                   animation: _imageController,
                   builder: (context, child) {
@@ -87,13 +82,13 @@ class _InitialSplashScreenState extends State<InitialSplashScreen>
                     child: Stack(
                       fit: StackFit.expand,
                       children: [
-                        // --- Gambar Utama ---
+                        // Gambar Utama
                         Image.asset(
                           'assets/images/splash_family.png',
-                          fit: BoxFit.cover, // gambar tetap full dari atas ke tengah
+                          fit: BoxFit.cover,
                         ),
 
-                        // --- Logo ASKA di atas gambar ---
+                        // Logo ASKA di atas gambar
                         SafeArea(
                           child: Padding(
                             padding: const EdgeInsets.only(top: 20),
@@ -101,17 +96,17 @@ class _InitialSplashScreenState extends State<InitialSplashScreen>
                               alignment: Alignment.topLeft,
                               child: FadeTransition(
                                 opacity: _logoOpacity,
-                                child: const AskaLogoWidget(height: 65),
+                                child: const AskaLogoWidget(height: 100),
                               ),
                             ),
                           ),
                         ),
 
-                        // --- Gradasi di bagian bawah gambar ---
+                        // Gradasi di bagian bawah gambar
                         Align(
                           alignment: Alignment.bottomCenter,
                           child: Container(
-                            height: imageHeight * 0.55, // gradasi 50–55% bagian bawah
+                            height: imageHeight * 0.55,
                             decoration: BoxDecoration(
                               gradient: LinearGradient(
                                 begin: Alignment.topCenter,
@@ -130,19 +125,13 @@ class _InitialSplashScreenState extends State<InitialSplashScreen>
                   ),
                 ),
 
+                const SizedBox(height: 10),
 
-
-                const SizedBox(height: 20),
-
-                // 2. Gambar Keluarga di tengah dengan tinggi dinamis
-                
-                // Spacer akan mengisi sisa ruang kosong dan mendorong widget di bawahnya
-                const Spacer(),
-
-                // 3. Bagian Teks dan Tombol di bawah
+                // Bagian Teks dan Tombol di bawah
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 30.0, vertical: 20.0),
+                  padding: const EdgeInsets.symmetric(horizontal: 30.0),
                   child: Column(
+                    mainAxisSize: MainAxisSize.min,
                     children: [
                       // Teks Judul
                       Text(
@@ -164,13 +153,21 @@ class _InitialSplashScreenState extends State<InitialSplashScreen>
                         height: 50,
                         child: ElevatedButton(
                           onPressed: () {
-                            Navigator.pushReplacementNamed(context, AppRoutes.onboarding);
+                            Navigator.pushReplacementNamed(
+                              context,
+                              AppRoutes.onboarding,
+                            );
                           },
                           style: ElevatedButton.styleFrom(
                             backgroundColor: AppColors.primary,
+                            foregroundColor: Colors.white,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(25),
                             ),
+                            // Tambahkan elevation untuk shadow
+                            elevation: 6,
+                            // Tambahkan shadowColor untuk warna shadow yang lebih natural
+                            shadowColor: AppColors.primary.withOpacity(0.7),
                           ),
                           child: const Text(
                             'Mulai Sekarang',
