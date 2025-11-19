@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "185466314004",
+    "project_id": "aska-402d5",
+    "storage_bucket": "aska-402d5.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:185466314004:android:f3336c9b7a739e29b23601",
+        "android_client_info": {
+          "package_name": "com.example.aska"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC0NThOkzqcaqonxl6igZ3rWdjI7Hl5q68"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
