@@ -15,7 +15,12 @@ class _SignUpScreenState extends State<SignUpScreen> {
   final TextEditingController nikController = TextEditingController();
   final TextEditingController ibuController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
+<<<<<<< HEAD
+  final TextEditingController confirmPasswordController =
+      TextEditingController();
+=======
   final TextEditingController confirmPasswordController = TextEditingController();
+>>>>>>> 5cc9993a51bf27141b7691405b878c1c086444f5
 
   final AuthService _authService = AuthService();
 
@@ -23,7 +28,10 @@ class _SignUpScreenState extends State<SignUpScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('PENDAFTARAN PENGGUNA', style: TextStyle(color: AppColors.textDark)),
+        title: const Text(
+          'PENDAFTARAN PENGGUNA',
+          style: TextStyle(color: AppColors.textDark),
+        ),
         backgroundColor: AppColors.white,
         elevation: 0,
         iconTheme: const IconThemeData(color: AppColors.textDark),
@@ -92,7 +100,12 @@ class _SignUpScreenState extends State<SignUpScreen> {
               height: 50,
               child: ElevatedButton(
                 onPressed: () async {
+<<<<<<< HEAD
+                  if (passwordController.text !=
+                      confirmPasswordController.text) {
+=======
                   if (passwordController.text != confirmPasswordController.text) {
+>>>>>>> 5cc9993a51bf27141b7691405b878c1c086444f5
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(content: Text("Password tidak cocok")),
                     );
@@ -114,9 +127,14 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primary,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(25),
+                  ),
                 ),
-                child: const Text('Daftar Sekarang', style: AppStyles.primaryButtonText),
+                child: const Text(
+                  'Daftar Sekarang',
+                  style: AppStyles.primaryButtonText,
+                ),
               ),
             ),
             const SizedBox(height: 20),
