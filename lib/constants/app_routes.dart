@@ -16,4 +16,5 @@ class AppRoutes {
   static const String search = '/search';
   static const String news = '/news';
   static const String newsDetail = '/news_detail';
+  static const String healthDetail = '/health_detail';
 }

@@ -12,8 +12,24 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   int _currentIndex = 0;
+
+  // Page controller for vertical swipe
+  late PageController _pageController;
+  int _currentPageIndex = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _pageController = PageController();
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -56,10 +72,10 @@ class _HomeScreenState extends State<HomeScreen> {
 
             const SizedBox(height: 20),
 
-            // --- SUMMARY & AVATAR SECTION ---
-            _buildSummaryAndAvatarSection(),
+            // --- VERTICAL SWIPE CONTAINER SECTION ---
+            _buildVerticalSwipeContainer(),
 
-            // --- END SUMMARY & AVATAR SECTION ---
+            // --- END VERTICAL SWIPE SECTION ---
             const SizedBox(height: 20),
 
             // Quick Actions
@@ -181,57 +197,105 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // --- SUMMARY & AVATAR SECTION ---
-  Widget _buildSummaryAndAvatarSection() {
+  // --- VERTICAL SWIPE CONTAINER SECTION ---
+  Widget _buildVerticalSwipeContainer() {
     return SizedBox(
-      height: 320,
-      child: Row(
+      height: 340,
+      child: Stack(
         children: [
-          // Summary Card (Kiri)
-          Expanded(child: _buildSummaryCard()),
-          const SizedBox(width: 16),
-          // Avatar Card (Kanan)
-          Expanded(child: _buildAvatarCard()),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSummaryCard() {
-    return Container(
-      height: 320,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 5),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            "Summary",
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 16),
-          Expanded(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                _buildSummaryItem(Icons.height, "Tinggi", "172.8 cm"),
-                _buildSummaryItem(Icons.monitor_weight, "Berat", "65.5 kg"),
-                _buildSummaryItem(Icons.calculate, "BMI", "21.9 (Normal)"),
-                _buildSummaryItem(Icons.favorite, "Detak Jantung", "7"),
-                _buildSummaryItem(Icons.opacity, "Tekanan Darah", "12"),
-              ],
+          // Background container (summary)
+          Positioned.fill(
+            child: Container(
+              margin: const EdgeInsets.only(top: 20),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 10,
+                    offset: const Offset(0, 5),
+                  ),
+                ],
+              ),
+              child: _buildSummaryCard(),
             ),
           ),
+
+          // Front container (avatar) with PageView
+          PageView(
+            controller: _pageController,
+            onPageChanged: (index) {
+              setState(() {
+                _currentPageIndex = index;
+              });
+            },
+            children: [
+              // Avatar container (front)
+              _buildAvatarCard(),
+              // Summary container (full view)
+              _buildFullSummaryCard(),
+            ],
+          ),
+
+          // Page indicator
+          Positioned(
+            bottom: 10,
+            left: 0,
+            right: 0,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: List.generate(2, (index) {
+                return AnimatedContainer(
+                  duration: const Duration(milliseconds: 300),
+                  width: _currentPageIndex == index ? 24.0 : 8.0,
+                  height: 8.0,
+                  margin: const EdgeInsets.symmetric(horizontal: 4.0),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(12),
+                    color: _currentPageIndex == index
+                        ? AppColors.primary
+                        : AppColors.grey.withOpacity(0.3),
+                  ),
+                );
+              }),
+            ),
+          ),
+
+          // Swipe hint for first page
+          if (_currentPageIndex == 0)
+            Positioned(
+              bottom: 30,
+              left: 0,
+              right: 0,
+              child: Center(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 6,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withOpacity(0.5),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.keyboard_arrow_right,
+                        color: Colors.white,
+                        size: 16,
+                      ),
+                      SizedBox(width: 4),
+                      Text(
+                        'Geser ke samping untuk detail',
+                        style: TextStyle(color: Colors.white, fontSize: 12),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
         ],
       ),
     );
@@ -240,13 +304,14 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildAvatarCard() {
     return Container(
       height: 320,
+      margin: const EdgeInsets.only(bottom: 20),
       decoration: BoxDecoration(
-        color: Colors.grey[100],
+        color: Colors.white,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.1),
-            blurRadius: 15,
+            blurRadius: 20,
             offset: const Offset(0, 8),
           ),
         ],
@@ -264,11 +329,31 @@ class _HomeScreenState extends State<HomeScreen> {
                   return Center(
                     child: Icon(
                       Icons.accessibility_new,
-                      size: 150,
+                      size: 200,
                       color: Colors.grey.shade400,
                     ),
                   );
                 },
+              ),
+            ),
+          ),
+
+          // Gradient Overlay
+          Positioned.fill(
+            child: Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(16),
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Colors.transparent,
+                    Colors.transparent,
+                    Colors.black.withOpacity(0.3),
+                    Colors.black.withOpacity(0.6),
+                  ],
+                  stops: const [0.0, 0.5, 0.7, 1.0],
+                ),
               ),
             ),
           ),
@@ -278,103 +363,213 @@ class _HomeScreenState extends State<HomeScreen> {
             top: 20,
             left: 16,
             right: 16,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.9),
-                borderRadius: BorderRadius.circular(20),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
-                    blurRadius: 5,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.thermostat, color: Colors.redAccent, size: 16),
-                  const SizedBox(width: 6),
-                  const Text(
-                    "Suhu: 36.5°C",
-                    style: TextStyle(
-                      color: Colors.black,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 14,
-                    ),
-                  ),
-                ],
-              ),
+            child: _buildFloatingMetric(
+              Icons.thermostat,
+              "Suhu",
+              "36.5°C",
+              Colors.redAccent,
             ),
           ),
 
           Positioned(
             left: 16,
             bottom: 80,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.9),
-                borderRadius: BorderRadius.circular(16),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
-                    blurRadius: 5,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(Icons.favorite, color: Colors.redAccent, size: 16),
-                  const SizedBox(width: 4),
-                  const Text(
-                    "72 bpm",
-                    style: TextStyle(
-                      color: Colors.black,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 13,
-                    ),
-                  ),
-                ],
-              ),
+            child: _buildFloatingMetric(
+              Icons.favorite,
+              "Jantung",
+              "72 bpm",
+              Colors.red,
             ),
           ),
 
           Positioned(
             right: 16,
             bottom: 80,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.9),
-                borderRadius: BorderRadius.circular(16),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
-                    blurRadius: 5,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(Icons.psychology, color: Colors.orangeAccent, size: 16),
-                  const SizedBox(width: 4),
-                  const Text(
-                    "Stress: Rendah",
-                    style: TextStyle(
-                      color: Colors.black,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 13,
-                    ),
-                  ),
-                ],
-              ),
+            child: _buildFloatingMetric(
+              Icons.psychology,
+              "Stress",
+              "Rendah",
+              Colors.orangeAccent,
             ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSummaryCard() {
+    return Padding(
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                "Summary Kesehatan",
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.textDark,
+                ),
+              ),
+              IconButton(
+                icon: const Icon(Icons.visibility, color: AppColors.primary),
+                onPressed: () {
+                  _pageController.animateToPage(
+                    1,
+                    duration: const Duration(milliseconds: 500),
+                    curve: Curves.easeInOut,
+                  );
+                },
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+
+          // Summary items with limited data
+          _buildSummaryItem(Icons.height, "Tinggi", "172.8 cm"),
+          const SizedBox(height: 12),
+          _buildSummaryItem(Icons.monitor_weight, "Berat", "65.5 kg"),
+          const SizedBox(height: 12),
+          _buildSummaryItem(Icons.calculate, "BMI", "21.9 (Normal)"),
+          const SizedBox(height: 12),
+          _buildSummaryItem(Icons.favorite, "Detak Jantung", "72 bpm"),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFullSummaryCard() {
+    return Container(
+      height: 320,
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                "Detail Kesehatan",
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.textDark,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+
+          // Expanded view with more details
+          Expanded(
+            child: GridView.count(
+              crossAxisCount: 2,
+              childAspectRatio: 1.8,
+              crossAxisSpacing: 12,
+              mainAxisSpacing: 12,
+              children: [
+                _buildDetailedMetric(
+                  Icons.height,
+                  "Tinggi",
+                  "172.8 cm",
+                  "Normal",
+                ),
+                _buildDetailedMetric(
+                  Icons.monitor_weight,
+                  "Berat",
+                  "65.5 kg",
+                  "Ideal",
+                ),
+                _buildDetailedMetric(Icons.calculate, "BMI", "21.9", "Normal"),
+                _buildDetailedMetric(
+                  Icons.favorite,
+                  "Detak Jantung",
+                  "72 bpm",
+                  "Sehat",
+                ),
+              ],
+            ),
+          ),
+
+          Container(
+            alignment: Alignment.center, // ❗ memastikan isi di tengah
+            padding: const EdgeInsets.all(16),
+            child: ElevatedButton(
+              onPressed: () => Navigator.pushNamed(context, '/health_detail'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary, // warna tombol
+                foregroundColor: Colors.white, // warna teks
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 100,
+                  vertical: 12,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              child: const Text('Lihat Detail'),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFloatingMetric(
+    IconData icon,
+    String label,
+    String value,
+    Color color,
+  ) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.9),
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.2),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, color: color, size: 16),
+          const SizedBox(width: 6),
+          Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label,
+                style: const TextStyle(fontSize: 10, color: Colors.grey),
+              ),
+              Text(
+                value,
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                  color: color,
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -384,20 +579,88 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildSummaryItem(IconData icon, String label, String value) {
     return Row(
       children: [
-        Icon(icon, color: const Color(0xFF0A6ED1), size: 20),
-        const SizedBox(width: 12),
-        Text(
-          "$label: ",
-          style: TextStyle(color: Colors.grey[600], fontSize: 14),
+        Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: const Color(0xFF0A6ED1).withOpacity(0.1),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Icon(icon, color: const Color(0xFF0A6ED1), size: 20),
         ),
-        Text(
-          value,
-          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Row(
+            children: [
+              Text(
+                "$label: ",
+                style: TextStyle(color: Colors.grey[600], fontSize: 14),
+              ),
+              Text(
+                value,
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 12,
+                  color: AppColors.textDark,
+                ),
+              ),
+            ],
+          ),
         ),
       ],
     );
   }
-  // --- END SUMMARY & AVATAR SECTION ---
+
+  Widget _buildDetailedMetric(
+    IconData icon,
+    String label,
+    String value,
+    String status,
+  ) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.grey[50],
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(icon, color: const Color(0xFF0A6ED1), size: 16),
+              const Spacer(),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                decoration: BoxDecoration(
+                  color: Colors.green.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  status,
+                  style: const TextStyle(
+                    fontSize: 10,
+                    color: Colors.green,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Text(label, style: const TextStyle(fontSize: 8, color: Colors.grey)),
+          Text(
+            value,
+            style: const TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.bold,
+              color: AppColors.textDark,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+  // --- END VERTICAL SWIPE SECTION ---
 
   Widget _buildQuickActions() {
     return Column(
