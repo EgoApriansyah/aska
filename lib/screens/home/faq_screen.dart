@@ -1,4 +1,5 @@
 import 'package:aska/constants/app_colors.dart';
+import 'package:aska/constants/app_routes.dart';
 import 'package:flutter/material.dart';
 
 class FAQScreen extends StatefulWidget {
@@ -12,42 +13,51 @@ class _FAQScreenState extends State<FAQScreen> {
   final List<FAQItem> faqItems = [
     FAQItem(
       question: "Siapa sajakah yang masuk dalam Anggota Keluarga?",
-      answer: "Anggota Keluarga adalah istri/suami yang sah, anak kandung, anak tiri dari perkawinan yang sah, dan anak angkat yang sah",
+      answer:
+          "Anggota Keluarga adalah istri/suami yang sah, anak kandung, anak tiri dari perkawinan yang sah, dan anak angkat yang sah",
       searchCount: "738 rb",
     ),
     FAQItem(
       question: "Berapa besaran iuran PBI?",
-      answer: "Informasi mengenai besaran iuran PBI akan diupdate secara berkala melalui aplikasi Mobile JKN",
+      answer:
+          "Informasi mengenai besaran iuran PBI akan diupdate secara berkala melalui aplikasi Mobile JKN",
       searchCount: "4.4 jt",
     ),
     FAQItem(
       question: "Berapa besaran iuran Peserta PBPU/Mandiri/Perseorangan?",
-      answer: "Besaran iuran untuk peserta PBPU/Mandiri/Perseorangan dapat dilihat pada menu informasi iuran di aplikasi",
+      answer:
+          "Besaran iuran untuk peserta PBPU/Mandiri/Perseorangan dapat dilihat pada menu informasi iuran di aplikasi",
       searchCount: "3.7 jt",
     ),
     FAQItem(
       question: "Cara Perubahan Data Melalui Aplikasi Mobile JKN?",
-      answer: "Perubahan data dapat dilakukan melalui menu profil > ubah data dengan mengikuti langkah-langkah yang tersedia",
+      answer:
+          "Perubahan data dapat dilakukan melalui menu profil > ubah data dengan mengikuti langkah-langkah yang tersedia",
       searchCount: "2.9 jt",
     ),
     FAQItem(
       question: "Bagaimana Jika Kartu Peserta Hilang?",
-      answer: "Jika kartu peserta hilang, dapat mengajukan permohonan cetak ulang melalui aplikasi Mobile JKN atau kantor BPJS terdekat",
+      answer:
+          "Jika kartu peserta hilang, dapat mengajukan permohonan cetak ulang melalui aplikasi Mobile JKN atau kantor BPJS terdekat",
       searchCount: "2.39 jt",
     ),
     FAQItem(
       question: "Aplikasi Mobile JKN",
-      answer: "Aplikasi Mobile JKN adalah aplikasi resmi BPJS Kesehatan untuk memudahkan peserta mengakses layanan",
+      answer:
+          "Aplikasi Mobile JKN adalah aplikasi resmi BPJS Kesehatan untuk memudahkan peserta mengakses layanan",
       searchCount: "2.24 jt",
     ),
     FAQItem(
-      question: "Siapa saja anggota keluarga yang ditanggung oleh Pekerja Penerima Upah?",
-      answer: "Pekerja penerima upah menanggung istri/suami dan maksimal 2 anak, atau orang tua jika belum menikah",
+      question:
+          "Siapa saja anggota keluarga yang ditanggung oleh Pekerja Penerima Upah?",
+      answer:
+          "Pekerja penerima upah menanggung istri/suami dan maksimal 2 anak, atau orang tua jika belum menikah",
       searchCount: "215 jt",
     ),
     FAQItem(
       question: "Apa Hak Peserta",
-      answer: "Hak peserta meliputi pelayanan kesehatan sesuai standar, informasi yang jelas, dan pengaduan layanan",
+      answer:
+          "Hak peserta meliputi pelayanan kesehatan sesuai standar, informasi yang jelas, dan pengaduan layanan",
       searchCount: "15.7 jt",
     ),
   ];
@@ -73,11 +83,102 @@ class _FAQScreenState extends State<FAQScreen> {
     });
   }
 
+  Widget _buildCustomNavBar() {
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        Container(
+          height: 70,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: const BorderRadius.only(
+              topLeft: Radius.circular(26),
+              topRight: Radius.circular(26),
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.15),
+                blurRadius: 10,
+                offset: const Offset(0, -3),
+              ),
+            ],
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              _buildNavBarItem(Icons.home_filled, 'Beranda', false),
+              _buildNavBarItem(Icons.newspaper, 'Berita', false),
+              const SizedBox(width: 56),
+              _buildNavBarItem(Icons.help_outline, 'FAQ', true),
+              _buildNavBarItem(Icons.person, 'Profile', false),
+            ],
+          ),
+        ),
+        Positioned(
+          left: 0,
+          right: 0,
+          top: -28,
+          child: Center(
+            child: FloatingActionButton(
+              onPressed: () {
+                // Navigate to card screen
+                Navigator.pushNamed(context, '/card');
+              },
+              backgroundColor: const Color(0xFF0A6ED1),
+              elevation: 8,
+              child: const Icon(Icons.credit_card, color: Colors.white),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildNavBarItem(IconData icon, String label, bool isActive) {
+    return InkWell(
+      onTap: () {
+        // Handle navigation based on label
+        switch (label) {
+          case 'Beranda':
+            Navigator.pushNamed(context, AppRoutes.home);
+            break;
+          case 'Berita':
+            Navigator.pushNamed(context, AppRoutes.news);
+            break;
+          case 'FAQ':
+            // Navigator.pushNamed(context, AppRoutes.faq);
+            break;
+          case 'Profile':
+            Navigator.pushNamed(context, AppRoutes.profile);
+            break;
+        }
+      },
+      borderRadius: BorderRadius.circular(12),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 10.0),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, color: isActive ? const Color(0xFF0A6ED1) : Colors.grey),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 10,
+                color: isActive ? const Color(0xFF0A6ED1) : Colors.grey,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.splashBackground,
       appBar: AppBar(
+        automaticallyImplyLeading: false,
         title: const Text(
           "FAQ (Frequently Ask Question)",
           style: TextStyle(
@@ -101,19 +202,12 @@ class _FAQScreenState extends State<FAQScreen> {
               decoration: BoxDecoration(
                 color: AppColors.surfaceColor,
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: AppColors.lightGrey,
-                  width: 1,
-                ),
+                border: Border.all(color: AppColors.lightGrey, width: 1),
               ),
               child: Row(
                 children: [
                   const SizedBox(width: 16),
-                  Icon(
-                    Icons.search,
-                    color: AppColors.textLight,
-                    size: 20,
-                  ),
+                  Icon(Icons.search, color: AppColors.textLight, size: 20),
                   const SizedBox(width: 12),
                   Expanded(
                     child: TextField(
@@ -149,7 +243,7 @@ class _FAQScreenState extends State<FAQScreen> {
               ),
             ),
           ),
-          
+
           // FAQ List
           Expanded(
             child: _filteredItems.isEmpty
@@ -183,6 +277,7 @@ class _FAQScreenState extends State<FAQScreen> {
           ),
         ],
       ),
+      bottomNavigationBar: _buildCustomNavBar(),
     );
   }
 }
@@ -234,11 +329,7 @@ class _FAQListItemState extends State<FAQListItem> {
             const SizedBox(height: 4),
             Row(
               children: [
-                Icon(
-                  Icons.visibility,
-                  size: 12,
-                  color: AppColors.lightGrey,
-                ),
+                Icon(Icons.visibility, size: 12, color: AppColors.lightGrey),
                 const SizedBox(width: 4),
                 Text(
                   widget.faqItem.searchCount,
