@@ -15,8 +15,12 @@ class _SignUpScreenState extends State<SignUpScreen> {
   final TextEditingController nikController = TextEditingController();
   final TextEditingController ibuController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
+<<<<<<< HEAD
   final TextEditingController confirmPasswordController =
       TextEditingController();
+=======
+  final TextEditingController confirmPasswordController = TextEditingController();
+>>>>>>> 5cc9993a51bf27141b7691405b878c1c086444f5
 
   final AuthService _authService = AuthService();
 
@@ -96,8 +100,12 @@ class _SignUpScreenState extends State<SignUpScreen> {
               height: 50,
               child: ElevatedButton(
                 onPressed: () async {
+<<<<<<< HEAD
                   if (passwordController.text !=
                       confirmPasswordController.text) {
+=======
+                  if (passwordController.text != confirmPasswordController.text) {
+>>>>>>> 5cc9993a51bf27141b7691405b878c1c086444f5
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(content: Text("Password tidak cocok")),
                     );
