@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../auth/login_screen.dart';
+import '../../constants/app_routes.dart'; // pastikan ini ada
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({Key? key}) : super(key: key);
@@ -25,13 +26,13 @@ class HomeScreen extends StatelessWidget {
           content: const Text("Apakah Anda yakin ingin keluar dari akun?"),
           actions: [
             TextButton(
-              onPressed: () => Navigator.pop(context), // Tutup dialog
+              onPressed: () => Navigator.pop(context),
               child: const Text("Batal"),
             ),
             ElevatedButton(
               onPressed: () {
-                Navigator.pop(context); // tutup dialog dulu
-                logout(context);        // baru logout
+                Navigator.pop(context); 
+                logout(context);
               },
               child: const Text("Logout"),
             ),
@@ -54,10 +55,30 @@ class HomeScreen extends StatelessWidget {
           ),
         ],
       ),
-      body: const Center(
-        child: Text(
-          "Selamat datang di Beranda ASKA!",
-          style: TextStyle(fontSize: 20),
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Text(
+              "Selamat datang di Beranda ASKA!",
+              style: TextStyle(fontSize: 20),
+            ),
+            const SizedBox(height: 30),
+
+            // 🔵 Tombol FAQ
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 40,
+                  vertical: 14,
+                ),
+              ),
+              onPressed: () {
+                Navigator.pushNamed(context, AppRoutes.faq);
+              },
+              child: const Text("Pergi ke FAQ"),
+            ),
+          ],
         ),
       ),
     );
