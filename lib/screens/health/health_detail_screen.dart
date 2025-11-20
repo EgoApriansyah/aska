@@ -1,9 +1,8 @@
-// lib/screens/health/health_detail_screen.dart
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import '../../constants/app_colors.dart';
 import '../../constants/app_styles.dart';
-import '../../constants/app_routes.dart';
+import '../../services/health_analysis_service.dart';
 
 class HealthDetailScreen extends StatefulWidget {
   const HealthDetailScreen({Key? key}) : super(key: key);
@@ -16,11 +15,17 @@ class _HealthDetailScreenState extends State<HealthDetailScreen>
     with TickerProviderStateMixin {
   late TabController _tabController;
   String _selectedPeriod = 'Minggu Ini';
+  
+  // Variables for AI Analysis
+  String _aiAnalysis = '';
+  bool _isAnalyzing = false;
+  List<Map<String, dynamic>> _weeklyData = [];
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this);
+    _tabController = TabController(length: 4, vsync: this);
+    _loadDummyData();
   }
 
   @override
@@ -28,6 +33,96 @@ class _HealthDetailScreenState extends State<HealthDetailScreen>
     _tabController.dispose();
     super.dispose();
   }
+
+  void _loadDummyData() {
+    setState(() {
+      _weeklyData = [
+        {
+          'date': 'Sen',
+          'heartRate': 72,
+          'steps': 8234,
+          'sleepHours': 7.2,
+          'stressLevel': 4,
+        },
+        {
+          'date': 'Sel', 
+          'heartRate': 75,
+          'steps': 9456,
+          'sleepHours': 6.8,
+          'stressLevel': 5,
+        },
+        {
+          'date': 'Rab',
+          'heartRate': 71, 
+          'steps': 7123,
+          'sleepHours': 7.5,
+          'stressLevel': 3,
+        },
+        {
+          'date': 'Kam',
+          'heartRate': 73,
+          'steps': 8678, 
+          'sleepHours': 6.5,
+          'stressLevel': 6,
+        },
+        {
+          'date': 'Jum',
+          'heartRate': 74,
+          'steps': 9234,
+          'sleepHours': 7.0,
+          'stressLevel': 4,
+        },
+        {
+          'date': 'Sab',
+          'heartRate': 72,
+          'steps': 5678,
+          'sleepHours': 8.2,
+          'stressLevel': 2,
+        },
+        {
+          'date': 'Min',
+          'heartRate': 73,
+          'steps': 6345,
+          'sleepHours': 7.8,
+          'stressLevel': 3,
+        },
+      ];
+    });
+  }
+
+  Future<void> _getAIAnalysis() async {
+  setState(() {
+    _isAnalyzing = true;
+    _aiAnalysis = '';
+  });
+
+  try {
+    final analysis = await HealthAnalysisService.generateHealthAnalysis(
+      healthScore: 85,           // Dari health score card
+      heartRate: 72,             // Dari vital signs  
+      bloodPressure: '120/80',   // Dari vital signs
+      temperature: 36.5,         // Dari vital signs
+      oxygenSaturation: 98,      // Dari vital signs
+      steps: 12457,              // Data dummy/real
+      sleepMinutes: 452,         // 7.5 jam dalam menit
+      stressLevel: 4,            // Data dummy/real
+      period: _selectedPeriod,
+    );
+    
+    setState(() {
+      _aiAnalysis = analysis;
+    });
+    
+  } catch (e) {
+    setState(() {
+      _aiAnalysis = '❌ Error: $e';
+    });
+  } finally {
+    setState(() {
+      _isAnalyzing = false;
+    });
+  }
+}
 
   @override
   Widget build(BuildContext context) {
@@ -39,6 +134,7 @@ class _HealthDetailScreenState extends State<HealthDetailScreen>
         elevation: 0,
         iconTheme: const IconThemeData(color: AppColors.textDark),
         actions: [
+
           IconButton(
             icon: const Icon(Icons.share),
             onPressed: () {
@@ -124,9 +220,7 @@ class _HealthDetailScreenState extends State<HealthDetailScreen>
               value: _selectedPeriod,
               underline: const SizedBox(),
               isDense: true,
-              items: ['Hari Ini', 'Minggu Ini', 'Bulan Ini', 'Tahun Ini'].map((
-                period,
-              ) {
+              items: ['Hari Ini', 'Minggu Ini', 'Bulan Ini', 'Tahun Ini'].map((period) {
                 return DropdownMenuItem(value: period, child: Text(period));
               }).toList(),
               onChanged: (value) {
@@ -184,9 +278,7 @@ class _HealthDetailScreenState extends State<HealthDetailScreen>
                     value: 0.85,
                     strokeWidth: 12,
                     backgroundColor: Colors.white.withOpacity(0.3),
-                    valueColor: const AlwaysStoppedAnimation<Color>(
-                      Colors.white,
-                    ),
+                    valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
                   ),
                 ),
                 Column(
@@ -409,7 +501,7 @@ class _HealthDetailScreenState extends State<HealthDetailScreen>
             tabs: const [
               Tab(text: 'Grafik'),
               Tab(text: 'Riwayat'),
-              // Tab(text: 'Analisis'),
+              Tab(text: 'AI Analysis'),
             ],
           ),
 
@@ -421,7 +513,7 @@ class _HealthDetailScreenState extends State<HealthDetailScreen>
               children: [
                 _buildChartTab(),
                 _buildHistoryTab(),
-                // _buildAnalysisTab(),
+                _buildAIAnalysisTab(),
               ],
             ),
           ),
@@ -665,68 +757,7 @@ class _HealthDetailScreenState extends State<HealthDetailScreen>
     );
   }
 
-  String _getMonthName(int month) {
-    const months = [
-      'Jan',
-      'Feb',
-      'Mar',
-      'Apr',
-      'May',
-      'Jun',
-      'Jul',
-      'Aug',
-      'Sep',
-      'Oct',
-      'Nov',
-      'Dec',
-    ];
-    return months[month - 1];
-  }
 
-  Widget _buildAnalysisTab() {
-    return Padding(
-      padding: const EdgeInsets.all(20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Analisis Kesehatan',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              color: AppColors.textDark,
-            ),
-          ),
-          const SizedBox(height: 20),
-
-          _buildAnalysisItem(
-            'Tren Detak Jantung',
-            'Stabil',
-            'Detak jantung Anda stabil dalam 7 hari terakhir',
-            Colors.green,
-          ),
-
-          const SizedBox(height: 16),
-
-          _buildAnalysisItem(
-            'Pola Tidur',
-            'Perlu Ditingkatkan',
-            'Data menunjukkan pola tidur kurang dari 7 jam',
-            Colors.orange,
-          ),
-
-          const SizedBox(height: 16),
-
-          _buildAnalysisItem(
-            'Level Aktivitas',
-            'Cukup Baik',
-            'Anda telah mencapai 80% target aktivitas harian',
-            Colors.blue,
-          ),
-        ],
-      ),
-    );
-  }
 
   Widget _buildAnalysisItem(
     String title,
@@ -775,6 +806,91 @@ class _HealthDetailScreenState extends State<HealthDetailScreen>
           Text(
             description,
             style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAIAnalysisTab() {
+    return Padding(
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        children: [
+          // Button untuk generate analysis
+          ElevatedButton(
+            onPressed: _isAnalyzing ? null : _getAIAnalysis,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primary,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            child: _isAnalyzing
+                ? const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                    ),
+                  )
+                : const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.auto_awesome, size: 20),
+                      SizedBox(width: 8),
+                      Text('Dapatkan Analisis AI'),
+                    ],
+                  ),
+          ),
+
+          const SizedBox(height: 20),
+
+          // Hasil Analisis AI
+          Expanded(
+            child: _aiAnalysis.isEmpty
+                ? const Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.auto_awesome,
+                        size: 48,
+                        color: Colors.grey,
+                      ),
+                      SizedBox(height: 16),
+                      Text(
+                        'Klik tombol di atas untuk mendapatkan\nanalisis kesehatan dari AI',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: Colors.grey,
+                          fontSize: 14,
+                        ),
+                      ),
+                    ],
+                  )
+                : SingleChildScrollView(
+                    child: Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: AppColors.primary.withOpacity(0.05),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: AppColors.primary.withOpacity(0.2),
+                        ),
+                      ),
+                      child: Text(
+                        _aiAnalysis,
+                        style: const TextStyle(
+                          fontSize: 14,
+                          height: 1.6,
+                          color: AppColors.textDark,
+                        ),
+                      ),
+                    ),
+                  ),
           ),
         ],
       ),
@@ -945,5 +1061,23 @@ class _HealthDetailScreenState extends State<HealthDetailScreen>
         ),
       ],
     );
+  }
+
+  String _getMonthName(int month) {
+    const months = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
+    ];
+    return months[month - 1];
   }
 }

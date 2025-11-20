@@ -509,7 +509,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
             alignment: Alignment.center, // ❗ memastikan isi di tengah
             padding: const EdgeInsets.all(16),
             child: ElevatedButton(
-              onPressed: () => Navigator.pushNamed(context, '/health_detail'),
+              onPressed: () => Navigator.pushNamed(context, AppRoutes.healthDetail),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary, // warna tombol
                 foregroundColor: Colors.white, // warna teks
