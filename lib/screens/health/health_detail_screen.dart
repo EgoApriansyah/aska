@@ -24,7 +24,7 @@ class _HealthDetailScreenState extends State<HealthDetailScreen>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 4, vsync: this);
+    _tabController = TabController(length: 3, vsync: this);
     _loadDummyData();
   }
 
@@ -98,14 +98,14 @@ class _HealthDetailScreenState extends State<HealthDetailScreen>
 
     try {
       final analysis = await HealthAnalysisService.generateHealthAnalysis(
-        healthScore: 85, // Dari health score card
-        heartRate: 72, // Dari vital signs
-        bloodPressure: '120/80', // Dari vital signs
-        temperature: 36.5, // Dari vital signs
-        oxygenSaturation: 98, // Dari vital signs
-        steps: 12457, // Data dummy/real
-        sleepMinutes: 452, // 7.5 jam dalam menit
-        stressLevel: 4, // Data dummy/real
+        healthScore: 85,
+        heartRate: 72,
+        bloodPressure: '120/80',
+        temperature: 36.5,
+        oxygenSaturation: 98,
+        steps: 12457,
+        sleepMinutes: 452,
+        stressLevel: 4,
         period: _selectedPeriod,
       );
 
@@ -218,9 +218,7 @@ class _HealthDetailScreenState extends State<HealthDetailScreen>
               value: _selectedPeriod,
               underline: const SizedBox(),
               isDense: true,
-              items: ['Hari Ini', 'Minggu Ini', 'Bulan Ini', 'Tahun Ini'].map((
-                period,
-              ) {
+              items: ['Hari Ini', 'Minggu Ini', 'Bulan Ini', 'Tahun Ini'].map((period) {
                 return DropdownMenuItem(value: period, child: Text(period));
               }).toList(),
               onChanged: (value) {
@@ -278,9 +276,7 @@ class _HealthDetailScreenState extends State<HealthDetailScreen>
                     value: 0.85,
                     strokeWidth: 12,
                     backgroundColor: Colors.white.withOpacity(0.3),
-                    valueColor: const AlwaysStoppedAnimation<Color>(
-                      Colors.white,
-                    ),
+                    valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
                   ),
                 ),
                 Column(
@@ -509,7 +505,7 @@ class _HealthDetailScreenState extends State<HealthDetailScreen>
 
           // Tab Content
           SizedBox(
-            height: 300,
+            height: 400,
             child: TabBarView(
               controller: _tabController,
               children: [
@@ -530,28 +526,12 @@ class _HealthDetailScreenState extends State<HealthDetailScreen>
       child: Column(
         children: [
           // Heart Rate Chart
-          _buildMetricChart('Detak Jantung (7 hari terakhir)', [
-            72,
-            75,
-            71,
-            73,
-            74,
-            72,
-            73,
-          ], Colors.red),
+          _buildMetricChart('Detak Jantung (7 hari terakhir)', [72, 75, 71, 73, 74, 72, 73], Colors.red),
 
           const SizedBox(height: 30),
 
-          // Blood Pressure Chart
-          _buildMetricChart('Tekanan Darah (7 hari terakhir)', [
-            120,
-            118,
-            122,
-            119,
-            121,
-            120,
-            119,
-          ], Colors.blue),
+          // Steps Chart
+          _buildMetricChart('Langkah Harian (7 hari terakhir)', [8234, 9456, 7123, 8678, 9234, 5678, 6345], Colors.green),
         ],
       ),
     );
@@ -580,7 +560,7 @@ class _HealthDetailScreenState extends State<HealthDetailScreen>
                 horizontalInterval: 10,
                 getDrawingHorizontalLine: (value) {
                   return FlLine(
-                    color: Colors.grey.withOpacity(0.3),
+                    color: const Color.fromARGB(255, 255, 255, 255).withOpacity(0.3),
                     strokeWidth: 1,
                   );
                 },
@@ -611,15 +591,7 @@ class _HealthDetailScreenState extends State<HealthDetailScreen>
                   sideTitles: SideTitles(
                     showTitles: true,
                     getTitlesWidget: (value, meta) {
-                      const days = [
-                        'Sen',
-                        'Sel',
-                        'Rab',
-                        'Kam',
-                        'Jum',
-                        'Sab',
-                        'Min',
-                      ];
+                      const days = ['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min'];
                       return Text(
                         days[value.toInt()],
                         style: const TextStyle(
@@ -630,20 +602,12 @@ class _HealthDetailScreenState extends State<HealthDetailScreen>
                     },
                   ),
                 ),
-                topTitles: const AxisTitles(
-                  sideTitles: SideTitles(showTitles: false),
-                ),
-                rightTitles: const AxisTitles(
-                  sideTitles: SideTitles(showTitles: false),
-                ),
+                topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
               ),
               lineBarsData: [
                 LineChartBarData(
-                  spots: data
-                      .asMap()
-                      .entries
-                      .map((e) => FlSpot(e.key.toDouble(), e.value))
-                      .toList(),
+                  spots: data.asMap().entries.map((e) => FlSpot(e.key.toDouble(), e.value)).toList(),
                   isCurved: true,
                   color: color,
                   barWidth: 3,
@@ -662,8 +626,8 @@ class _HealthDetailScreenState extends State<HealthDetailScreen>
               ],
               minX: 0,
               maxX: 6,
-              minY: 60,
-              maxY: 130,
+              minY: data.reduce((a, b) => a < b ? a : b) - 10,
+              maxY: data.reduce((a, b) => a > b ? a : b) + 10,
             ),
           ),
         ),
@@ -677,14 +641,15 @@ class _HealthDetailScreenState extends State<HealthDetailScreen>
       child: ListView.builder(
         shrinkWrap: true,
         physics: const NeverScrollableScrollPhysics(),
-        itemCount: 10,
+        itemCount: _weeklyData.length,
         itemBuilder: (context, index) {
+          final data = _weeklyData[index];
           return _buildHistoryItem(
-            DateTime.now().subtract(Duration(days: index)),
-            '72 bpm',
-            '120/80',
-            '36.5°C',
-            '98%',
+            data['date'] as String,
+            '${data['heartRate']} bpm',
+            '${data['steps']} steps',
+            '${data['sleepHours']} jam',
+            '${data['stressLevel']}/10',
           );
         },
       ),
@@ -692,11 +657,11 @@ class _HealthDetailScreenState extends State<HealthDetailScreen>
   }
 
   Widget _buildHistoryItem(
-    DateTime date,
+    String date,
     String heartRate,
-    String bloodPressure,
-    String temperature,
-    String oxygen,
+    String steps,
+    String sleep,
+    String stress,
   ) {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -709,21 +674,13 @@ class _HealthDetailScreenState extends State<HealthDetailScreen>
         children: [
           // Date
           SizedBox(
-            width: 60,
-            child: Column(
-              children: [
-                Text(
-                  '${date.day}',
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                Text(
-                  '${_getMonthName(date.month)}',
-                  style: const TextStyle(fontSize: 12, color: Colors.grey),
-                ),
-              ],
+            width: 40,
+            child: Text(
+              date,
+              style: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ),
 
@@ -735,9 +692,9 @@ class _HealthDetailScreenState extends State<HealthDetailScreen>
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
                 _buildHistoryMetric('❤️', heartRate),
-                _buildHistoryMetric('💉', bloodPressure),
-                _buildHistoryMetric('🌡️', temperature),
-                _buildHistoryMetric('💨', oxygen),
+                _buildHistoryMetric('👣', steps),
+                _buildHistoryMetric('😴', sleep),
+                _buildHistoryMetric('🧠', stress),
               ],
             ),
           ),
@@ -756,59 +713,6 @@ class _HealthDetailScreenState extends State<HealthDetailScreen>
           style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
         ),
       ],
-    );
-  }
-
-  Widget _buildAnalysisItem(
-    String title,
-    String status,
-    String description,
-    Color color,
-  ) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Text(
-                title,
-                style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.textDark,
-                ),
-              ),
-              const Spacer(),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: color.withOpacity(0.2),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Text(
-                  status,
-                  style: TextStyle(
-                    color: color,
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Text(
-            description,
-            style: TextStyle(fontSize: 12, color: Colors.grey[600]),
-          ),
-        ],
-      ),
     );
   }
 
@@ -858,7 +762,7 @@ class _HealthDetailScreenState extends State<HealthDetailScreen>
                       Icon(Icons.auto_awesome, size: 48, color: Colors.grey),
                       SizedBox(height: 16),
                       Text(
-                        'Klik tombol di atas untuk mendapatkan\nanalisis kesehatan dari AI',
+                        'Klik tombol di atas untuk mendapatkan\nanalisis kesehatan mendalam dari AI',
                         textAlign: TextAlign.center,
                         style: TextStyle(color: Colors.grey, fontSize: 14),
                       ),
@@ -1054,23 +958,5 @@ class _HealthDetailScreenState extends State<HealthDetailScreen>
         ),
       ],
     );
-  }
-
-  String _getMonthName(int month) {
-    const months = [
-      'Jan',
-      'Feb',
-      'Mar',
-      'Apr',
-      'May',
-      'Jun',
-      'Jul',
-      'Aug',
-      'Sep',
-      'Oct',
-      'Nov',
-      'Dec',
-    ];
-    return months[month - 1];
   }
 }

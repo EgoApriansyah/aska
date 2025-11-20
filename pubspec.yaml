@@ -43,6 +43,7 @@ dependencies:
   pointer_interceptor: ^0.10.1+2
   http: ^1.6.0
   cloud_firestore: ^6.1.0
+  flutter_gemini: ^3.0.0
 
 dev_dependencies:
   flutter_test:
