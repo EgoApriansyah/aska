@@ -1,3 +1,4 @@
+import 'package:aska/screens/facilities/facilities_screen.dart';
 import 'package:aska/screens/health/health_detail_screen.dart';
 import 'package:aska/screens/news/news_screen.dart';
 import 'package:flutter/material.dart';
@@ -23,6 +24,7 @@ class AppRouter {
       AppRoutes.profile: (context) => const ProfileScreen(),
       AppRoutes.news: (context) => const NewsScreen(),
       AppRoutes.healthDetail: (context) => const HealthDetailScreen(),
+      AppRoutes.facilities: (context) => const FacilitiesScreen(),
     };
   }
 }

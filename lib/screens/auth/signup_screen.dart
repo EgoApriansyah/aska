@@ -49,8 +49,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
             TextField(
               controller: bpjsController,
               decoration: AppStyles.inputDecoration.copyWith(
-                labelText: 'No. Kartu BPJS Kesehatan',
-                prefixIcon: const Icon(Icons.credit_card),
+                labelText: 'Alamat Email',
+                prefixIcon: const Icon(Icons.email),
               ),
             ),
 
@@ -149,14 +149,18 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
                         setState(() => isLoading = true);
 
-                        // TODO: Implementasi Firebase registration
-                        // final result = await _authService.register(
-                        //   email: emailController.text.trim(),
-                        //   password: passwordController.text.trim(),
-                        //   bpjsNumber: bpjsController.text.trim(),
-                        //   nik: nikController.text.trim(),
-                        //   motherName: motherNameController.text.trim(),
-                        // );
+                        final result = await _authService.signUp(
+                          email: bpjsController.text.trim(),
+                          password: passwordController.text.trim(),
+                        );
+
+                        if (result != null) {
+                          Navigator.pop(context); // Kembali ke login
+                        } else {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text("Gagal membuat akun")),
+                          );
+                        }
 
                         setState(() => isLoading = false);
 

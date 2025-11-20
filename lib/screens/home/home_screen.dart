@@ -35,31 +35,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.grey[100],
-      appBar: AppBar(
-        title: Row(
-          children: [
-            const AskaLogoWidget(height: 30),
-            const SizedBox(width: 10),
-            const Text('ASKA'),
-          ],
-        ),
-        backgroundColor: Colors.white,
-        elevation: 0,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.notifications_outlined),
-            onPressed: () {
-              // TODO: Navigate to notifications
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.search),
-            onPressed: () {
-              Navigator.pushNamed(context, AppRoutes.search);
-            },
-          ),
-        ],
-      ),
+      appBar: _buildCustomAppBar(),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -301,6 +277,112 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     );
   }
 
+  // --- CUSTOM APP BAR ---
+  PreferredSizeWidget _buildCustomAppBar() {
+    return PreferredSize(
+      preferredSize: const Size.fromHeight(120), // Adjust height as needed
+      child: Container(
+        padding: EdgeInsets.only(top: MediaQuery.of(context).padding.top),
+        color: Colors.transparent,
+        child: Stack(
+          children: [
+            // Background image - menggunakan BoxFit.cover untuk memastikan tidak overflow
+            Positioned.fill(
+              child: ClipRRect(
+                borderRadius: const BorderRadius.only(
+                  bottomLeft: Radius.circular(20),
+                  bottomRight: Radius.circular(20),
+                ),
+                child: Transform.scale(
+                  scale: 1.05, // <--- Zoom 130%
+                  child: Image.asset(
+                    'assets/images/headeratas.png',
+                    fit: BoxFit.cover, // tetap cover
+                    errorBuilder: (context, error, stackTrace) {
+                      return Container(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [
+                              AppColors.primary,
+                              AppColors.primary.withOpacity(0.8),
+                            ],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
+                          borderRadius: const BorderRadius.only(
+                            bottomLeft: Radius.circular(20),
+                            bottomRight: Radius.circular(20),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ),
+            ),
+
+            // Content overlay dengan logo dan nama project
+            Positioned.fill(
+              child: SafeArea(
+                child: Container(
+                  alignment: Alignment.centerRight,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16.0,
+                      vertical: 12.0,
+                    ),
+                    child: Stack(
+                      clipBehavior: Clip.none,
+                      children: [
+                        // Lingkaran putih + icon
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.15),
+                                blurRadius: 8,
+                                spreadRadius: 1,
+                                offset: const Offset(0, 3),
+                              ),
+                            ],
+                          ),
+                          child: const Icon(
+                            Icons.notifications_outlined,
+                            color: Colors.black,
+                            size: 30,
+                            weight: 1,
+                          ),
+                        ),
+
+                        // Badge merah (posisi di pojok kanan atas)
+                        Positioned(
+                          right: 0, // posisikan di kanan atas
+                          top: 0,
+                          child: Container(
+                            width: 12,
+                            height: 12,
+                            decoration: const BoxDecoration(
+                              color: Colors.red,
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+  // --- END CUSTOM APP BAR ---
+
   Widget _buildAvatarCard() {
     return Container(
       height: 320,
@@ -509,7 +591,8 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
             alignment: Alignment.center, // ❗ memastikan isi di tengah
             padding: const EdgeInsets.all(16),
             child: ElevatedButton(
-              onPressed: () => Navigator.pushNamed(context, '/health_detail'),
+              onPressed: () =>
+                  Navigator.pushNamed(context, AppRoutes.healthDetail),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary, // warna tombol
                 foregroundColor: Colors.white, // warna teks
@@ -715,11 +798,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
               'Konsultasi',
               () => Navigator.pushNamed(context, '/consultation'),
             ),
-            _buildQuickAction(
-              Icons.more_horiz,
-              'Lainnya',
-              () => _showMoreOptions(),
-            ),
+            _buildQuickAction(Icons.more_horiz, 'Lainnya', () => ()),
           ],
         ),
       ],
