@@ -42,7 +42,6 @@ dependencies:
   google_generative_ai: ^0.4.7
   pointer_interceptor: ^0.10.1+2
   http: ^1.6.0
-  google_generative_ai: ^0.2.2
   cloud_firestore: ^6.1.0
 
 dev_dependencies:
