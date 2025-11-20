@@ -15,6 +15,11 @@ class _HealthDetailScreenState extends State<HealthDetailScreen>
     with TickerProviderStateMixin {
   late TabController _tabController;
   String _selectedPeriod = 'Minggu Ini';
+  
+  // Variables for AI Analysis
+  String _aiAnalysis = '';
+  bool _isAnalyzing = false;
+  List<Map<String, dynamic>> _weeklyData = [];
 
   // Variables for AI Analysis
   String _aiAnalysis = '';
@@ -133,6 +138,7 @@ class _HealthDetailScreenState extends State<HealthDetailScreen>
         elevation: 0,
         iconTheme: const IconThemeData(color: AppColors.textDark),
         actions: [
+
           IconButton(
             icon: const Icon(Icons.share),
             onPressed: () {
@@ -218,9 +224,7 @@ class _HealthDetailScreenState extends State<HealthDetailScreen>
               value: _selectedPeriod,
               underline: const SizedBox(),
               isDense: true,
-              items: ['Hari Ini', 'Minggu Ini', 'Bulan Ini', 'Tahun Ini'].map((
-                period,
-              ) {
+              items: ['Hari Ini', 'Minggu Ini', 'Bulan Ini', 'Tahun Ini'].map((period) {
                 return DropdownMenuItem(value: period, child: Text(period));
               }).toList(),
               onChanged: (value) {
@@ -278,9 +282,7 @@ class _HealthDetailScreenState extends State<HealthDetailScreen>
                     value: 0.85,
                     strokeWidth: 12,
                     backgroundColor: Colors.white.withOpacity(0.3),
-                    valueColor: const AlwaysStoppedAnimation<Color>(
-                      Colors.white,
-                    ),
+                    valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
                   ),
                 ),
                 Column(
