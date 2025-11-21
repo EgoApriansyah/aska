@@ -4,7 +4,7 @@ import 'constants/app_colors.dart';
 import 'routes/app_router.dart';
 
 class App extends StatelessWidget {
-  const App({Key? key}) : super(key: key);
+  const App({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -16,7 +16,7 @@ class App extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: AppColors.primary),
       ),
       // PASTIKAN initialRoute DISET KE initialSplash
-      initialRoute: AppRoutes.initialSplash,
+      initialRoute: AppRoutes.facilities,
       routes: AppRouter.getAllRoutes(),
     );
   }

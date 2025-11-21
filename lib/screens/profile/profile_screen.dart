@@ -6,7 +6,7 @@ import '../../constants/app_routes.dart';
 import '../../widgets/common/aska_logo_widget.dart';
 
 class ProfileScreen extends StatefulWidget {
-  const ProfileScreen({Key? key}) : super(key: key);
+  const ProfileScreen({super.key});
 
   @override
   State<ProfileScreen> createState() => _ProfileScreenState();

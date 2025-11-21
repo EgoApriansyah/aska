@@ -33,7 +33,7 @@ DATA KESEHATAN ($period)
 - Skor: $healthScore/100
 - Detak Jantung: $heartRate bpm
 - Tekanan Darah: $bloodPressure mmHg
-- Suhu: ${temperature}°C
+- Suhu: $temperature°C
 - Oksigen: $oxygenSaturation%
 - Langkah: $steps steps
 - Tidur: ${(sleepMinutes / 60).toStringAsFixed(1)} jam

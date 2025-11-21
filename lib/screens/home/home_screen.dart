@@ -6,14 +6,14 @@ import '../../constants/app_routes.dart';
 import '../../widgets/common/aska_logo_widget.dart';
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({Key? key}) : super(key: key);
+  const HomeScreen({super.key});
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
 class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
-  int _currentIndex = 0;
+  final int _currentIndex = 0;
 
   // Page controller for vertical swipe
   late PageController _pageController;

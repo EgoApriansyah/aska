@@ -6,7 +6,7 @@ import '../../constants/app_routes.dart';
 import '../../widgets/common/aska_logo_widget.dart';
 
 class InitialSplashScreen extends StatefulWidget {
-  const InitialSplashScreen({Key? key}) : super(key: key);
+  const InitialSplashScreen({super.key});
 
   @override
   State<InitialSplashScreen> createState() => _InitialSplashScreenState();

@@ -1,5 +1,7 @@
+import 'package:aska/models/facility_model.dart';
 import 'package:aska/screens/facilities/facilities_screen.dart';
 import 'package:aska/screens/health/health_detail_screen.dart';
+import 'package:aska/screens/medicine/medicine_detail_screen.dart';
 import 'package:aska/screens/news/news_screen.dart';
 import 'package:flutter/material.dart';
 import '../constants/app_routes.dart';
@@ -25,6 +27,11 @@ class AppRouter {
       AppRoutes.news: (context) => const NewsScreen(),
       AppRoutes.healthDetail: (context) => const HealthDetailScreen(),
       AppRoutes.facilities: (context) => const FacilitiesScreen(),
+      
+      '/medicine_detail': (context) {
+        final pharmacy = ModalRoute.of(context)!.settings.arguments as Facility;
+        return MedicineDetailScreen(pharmacy: pharmacy);
+      },
     };
   }
 }

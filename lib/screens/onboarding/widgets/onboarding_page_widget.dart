@@ -16,7 +16,7 @@ class OnboardingPageWidget extends StatelessWidget {
   final int totalPages;
 
   const OnboardingPageWidget({
-    Key? key,
+    super.key,
     required this.data,
     required this.isLastPage,
     required this.isFirstPage,
@@ -25,7 +25,7 @@ class OnboardingPageWidget extends StatelessWidget {
     required this.onSkipPressed,
     required this.currentPage,
     required this.totalPages,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

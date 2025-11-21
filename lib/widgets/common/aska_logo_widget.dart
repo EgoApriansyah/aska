@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 class AskaLogoWidget extends StatelessWidget {
   final double? height;
 
-  const AskaLogoWidget({Key? key, this.height}) : super(key: key);
+  const AskaLogoWidget({super.key, this.height});
 
   @override
   Widget build(BuildContext context) {

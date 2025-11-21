@@ -1,11 +1,15 @@
 // lib/screens/facilities/facilities_screen.dart
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:aska/services/medicine_service.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_osm_plugin/flutter_osm_plugin.dart';
-import '../../constants/app_colors.dart';
-import '../../constants/app_styles.dart';
-import '../../constants/app_routes.dart';
-import 'package:pointer_interceptor/pointer_interceptor.dart';
+import 'package:flutter_osm_plugin/flutter_osm_plugin.dart' as OSM;
+import 'package:aska/constants/app_colors.dart';
+import 'package:aska/models/facility_model.dart';
+import 'package:aska/services/facilities_service.dart';
+import 'package:aska/services/firestore_service.dart';
+import 'package:aska/screens/facilities/widgets/map_widget.dart';
+import 'package:aska/screens/facilities/widgets/facility_list_widget.dart';
+import 'package:aska/screens/facilities/widgets/facility_card_widget.dart';
 
 class FacilitiesScreen extends StatefulWidget {
   const FacilitiesScreen({Key? key}) : super(key: key);
@@ -15,101 +19,205 @@ class FacilitiesScreen extends StatefulWidget {
 }
 
 class _FacilitiesScreenState extends State<FacilitiesScreen> {
-  final TextEditingController _searchController = TextEditingController();
+  late OSM.MapController _mapController;
+  List<Facility> _allFacilities = []; // Data asli dari API/Firestore
+  List<Facility> _filteredFacilities = []; // Data yang sudah difilter untuk ditampilkan
+  bool _isLoading = true;
   String _selectedFilter = 'Semua';
-  late MapController _mapController;
+  String _searchQuery = '';
+
+  // State untuk mode pencarian
+  bool _isMedicineSearchMode = false;
+
+  final List<String> _facilityTypeFilters = [
+    'Semua',
+    'Rumah Sakit',
+    'Klinik',
+    'Klinik Dokter',
+    'Apotek',
+  ];
 
   @override
   void initState() {
     super.initState();
-
-    _mapController = MapController(
-      initMapWithUserPosition: const UserTrackingOption(),
+    _mapController = OSM.MapController(
+      initMapWithUserPosition: const OSM.UserTrackingOption(
+        enableTracking: true,
+      ),
     );
+    _loadNearbyFacilities();
+    // Refresh data obat di background agar tidak mengganggu UI
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _refreshAllPharmacyMedicines();
+    });
   }
 
-  // Sample data for facilities
-  final List<Facility> _facilities = [
-    Facility(
-      id: '1',
-      name: 'RSUD Cibabat',
-      address: 'Jl. Pemuda No. 123, Cibabat, Cimahi Selatan',
-      latitude: -6.9217,
-      longitude: 107.6191,
-      phone: '022-42212345',
-      distance: '1.2 km',
-      rating: 4.5,
-      openTime: '07:00 - 21:00',
-      type: 'Rumah Sakit',
-      services: ['IGD', 'Rawat Inap', 'ICU', 'Laboratorium'],
-    ),
-    Facility(
-      id: '2',
-      name: 'Klinik Medika Stania',
-      address: 'Jl. Sukajadi No. 45, Sukajadi, Cimahi Selatan',
-      latitude: -6.9175,
-      longitude: 107.6185,
-      phone: '022-42267890',
-      distance: '2.5 km',
-      rating: 4.2,
-      openTime: '08:00 - 20:00',
-      type: 'Klinik',
-      services: ['Umum', 'Gigi', 'Kandungan'],
-    ),
-    Facility(
-      id: '3',
-      name: 'Puskesmas Sukajadi',
-      address: 'Jl. Ir. H. Juanda No. 89, Sukajadi, Cimahi Selatan',
-      latitude: -6.9188,
-      longitude: 107.6178,
-      phone: '022-42298765',
-      distance: '3.1 km',
-      rating: 4.0,
-      openTime: '07:00 - 15:00',
-      type: 'Puskesmas',
-      services: ['Kesehatan Umum', 'Imunisasi', 'KIA'],
-    ),
-    Facility(
-      id: '4',
-      name: 'Apotek Sehat',
-      address: 'Jl. Karangsetra No. 56, Cimahi Selatan',
-      latitude: -6.9205,
-      longitude: 107.6205,
-      phone: '022-42234567',
-      distance: '0.8 km',
-      rating: 4.3,
-      openTime: '08:00 - 22:00',
-      type: 'Apotek',
-      services: ['Obat', 'Alat Kesehatan', 'Resep'],
-    ),
-  ];
+  Future<void> _refreshAllPharmacyMedicines() async {
+    try {
+      final querySnapshot = await FirebaseFirestore.instance
+          .collection('facilities')
+          .where('type', isEqualTo: 'Apotek')
+          .get();
+
+      for (var doc in querySnapshot.docs) {
+        final facilityData = doc.data() as Map<String, dynamic>;
+        final medicines = List<String>.from(facilityData['medicines'] ?? []);
+        
+        if (medicines.isEmpty) {
+          final newMedicines = MedicineService.generateRandomMedicineList();
+          await FirestoreService.updatePharmacyMedicines(doc.id, newMedicines);
+        }
+      }
+    } catch (e) {
+      print('Gagal refresh data obat: $e');
+    }
+  }
+
+  Future<void> _loadNearbyFacilities() async {
+    if (mounted) setState(() => _isLoading = true);
+    try {
+      final position = await FacilitiesService.getCurrentLocation();
+      
+      List<Facility> firestoreFacilities = await FirestoreService.getNearbyFacilities(
+          position.latitude, position.longitude, 50.0);
+
+      List<Facility> finalFacilities;
+
+      if (firestoreFacilities.isNotEmpty) {
+        finalFacilities = firestoreFacilities;
+      } else {
+        final apiFacilities = await FacilitiesService.fetchNearbyFacilities(
+            position.latitude, position.longitude);
+        if (apiFacilities.isNotEmpty) {
+          await FirestoreService.saveFacilities(apiFacilities);
+        }
+        finalFacilities = apiFacilities;
+      }
+
+      await _mapController.moveTo(
+        OSM.GeoPoint(latitude: position.latitude, longitude: position.longitude),
+      );
+
+      if (mounted) {
+        setState(() {
+          _allFacilities = finalFacilities;
+          _filteredFacilities = finalFacilities;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      print(e);
+      if (mounted) {
+        setState(() => _isLoading = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(e.toString().contains('Exception') 
+              ? e.toString().replaceFirst('Exception: ', '') 
+              : 'Gagal memuat data faskes.')),
+        );
+      }
+    }
+  }
+
+  // Fungsi utama untuk menerapkan semua filter
+  Future<void> _applyFilters() async {
+    if (mounted) setState(() => _isLoading = true);
+
+    try {
+      if (_isMedicineSearchMode && _searchQuery.isNotEmpty) {
+        // --- MODE PENCARIAN OBAT (BARU) ---
+        final position = await FacilitiesService.getCurrentLocation();
+        // 1. Ambil SEMUA apotek terdekat
+        final allNearbyPharmacies =
+            await FirestoreService.getNearbyPharmacies(
+                position.latitude, position.longitude, 100.0); // Cari dalam radius 10km
+
+        // 2. Filter di sisi klien
+        final List<Facility> results = [];
+        for (var pharmacy in allNearbyPharmacies) {
+          // Periksa apakah ada obat di apotek ini yang cocok dengan query
+          print(pharmacy);
+          final hasMedicine = pharmacy.medicines.any((med) =>
+              med.toLowerCase().contains(_searchQuery.toLowerCase()));
+
+          if (hasMedicine) {
+            results.add(pharmacy);
+          }
+        }
+
+        if (mounted) {
+          setState(() {
+            _filteredFacilities = results;
+            _isLoading = false;
+          });
+        }
+      } else {
+        // --- MODE PENCARIAN FASKES (TIDAK BERUBAH) ---
+        final List<Facility> tempList = _allFacilities.where((facility) {
+          final matchesSearch = facility.name
+              .toLowerCase()
+              .contains(_searchQuery.toLowerCase());
+          final matchesFilter = _selectedFilter == 'Semua' ||
+              facility.type == _selectedFilter;
+          return matchesSearch && matchesFilter;
+        }).toList();
+
+        if (mounted) {
+          setState(() {
+            _filteredFacilities = tempList;
+            _isLoading = false;
+          });
+        }
+      }
+    } catch (e) {
+      print('Error applying filters: $e');
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.grey[100],
       appBar: AppBar(
-        title: const Text('Faskes Terdekat'),
+        title: Text(_isMedicineSearchMode ? 'Cari Obat' : 'Cari Faskes'),
         backgroundColor: Colors.white,
         elevation: 0,
         iconTheme: const IconThemeData(color: AppColors.textDark),
       ),
       body: Column(
         children: [
-          // Search and Filter Section
-          _buildSearchAndFilter(),
+          // Bagian Pencarian dan Filter
+          _buildSearchAndFilterSection(),
 
-          // Map Section
-          Expanded(flex: 2, child: _buildMap()),
+          // Bagian Peta
+          Expanded(
+            flex: 2,
+            child: MapWidget(
+              mapController: _mapController,
+              facilities: _filteredFacilities,
+              onRefresh: _loadNearbyFacilities,
+            ),
+          ),
 
-          // Facilities List
-          Expanded(flex: 3, child: _buildFacilitiesList()),
+          // Bagian Daftar Faskes
+          Expanded(
+            flex: 3,
+            child: _isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : _filteredFacilities.isEmpty
+                    ? _buildEmptyState()
+                    : FacilityListWidget(
+                        facilities: _filteredFacilities,
+                        mapController: _mapController,
+                        isSearchingMedicine: _isMedicineSearchMode,
+                      ),
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildSearchAndFilter() {
+  Widget _buildSearchAndFilterSection() {
     return Container(
       padding: const EdgeInsets.all(16),
       color: Colors.white,
@@ -117,585 +225,243 @@ class _FacilitiesScreenState extends State<FacilitiesScreen> {
         children: [
           // Search Bar
           TextField(
-            controller: _searchController,
+            onChanged: (query) {
+              _searchQuery = query;
+              // Debounce sederhana: tunggu hingga user berhenti mengetik
+              Future.delayed(const Duration(milliseconds: 500), () {
+                if (mounted && _searchQuery == query) {
+                  _applyFilters();
+                }
+              });
+            },
             decoration: InputDecoration(
-              hintText: 'Cari faskes...',
-              prefixIcon: const Icon(Icons.search),
-              suffixIcon: IconButton(
-                icon: const Icon(Icons.clear),
-                onPressed: () {
-                  _searchController.clear();
-                  setState(() {});
-                },
+              hintText: _isMedicineSearchMode
+                  ? 'Ketik nama obat (misal: Paracetamol)...'
+                  : 'Cari nama faskes...',
+              prefixIcon: Icon(
+                _isMedicineSearchMode ? Icons.medical_services : Icons.search,
               ),
+              suffixIcon: _searchQuery.isNotEmpty
+                  ? IconButton(
+                      icon: const Icon(Icons.clear),
+                      onPressed: () {
+                        _searchQuery = '';
+                        _applyFilters();
+                      },
+                    )
+                  : null,
               filled: true,
               fillColor: Colors.grey[100],
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(10),
                 borderSide: BorderSide.none,
               ),
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: 20,
-                vertical: 15,
-              ),
+              contentPadding:
+                  const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
             ),
           ),
 
           const SizedBox(height: 12),
 
-          // Filter Chips
-          SizedBox(
-            height: 40,
-            child: ListView.builder(
-              scrollDirection: Axis.horizontal,
-              itemCount: 5,
-              itemBuilder: (context, index) {
-                final filters = [
-                  'Semua',
-                  'Rumah Sakit',
-                  'Klinik',
-                  'Puskesmas',
-                  'Apotek',
-                ];
-                final isSelected = filters[index] == _selectedFilter;
-
-                return Padding(
-                  padding: const EdgeInsets.only(right: 8),
-                  child: InkWell(
-                    onTap: () {
-                      setState(() {
-                        _selectedFilter = filters[index];
-                      });
-                    },
-                    borderRadius: BorderRadius.circular(20),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 8,
-                      ),
-                      decoration: BoxDecoration(
-                        color: isSelected
-                            ? AppColors.primary
-                            : Colors.transparent,
-                        border: Border.all(
-                          color: isSelected
-                              ? AppColors.primary
-                              : Colors.grey[300]!,
-                        ),
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Text(
-                        filters[index],
-                        style: TextStyle(
-                          color: isSelected ? Colors.white : AppColors.textDark,
-                          fontWeight: isSelected
-                              ? FontWeight.bold
-                              : FontWeight.normal,
-                          fontSize: 12,
-                        ),
-                      ),
-                    ),
-                  ),
-                );
-              },
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildMap() {
-    final MapController _mapController = MapController(
-      initMapWithUserPosition: const UserTrackingOption(
-        enableTracking: true,
-        unFollowUser: false,
-      ),
-    );
-
-    // Fungsi untuk menambahkan marker semua fasilitas
-    Future<void> _addFacilityMarkers() async {
-      for (var facility in _facilities) {
-        await _mapController.addMarker(
-          GeoPoint(latitude: facility.latitude, longitude: facility.longitude),
-          markerIcon: const MarkerIcon(
-            icon: Icon(Icons.location_on, color: Colors.red, size: 48),
-          ),
-        );
-      }
-
-      // Zoom agar semua marker terlihat
-      if (_facilities.isNotEmpty) {
-        final geoPoints = _facilities
-            .map((f) => GeoPoint(latitude: f.latitude, longitude: f.longitude))
-            .toList();
-        await _mapController.zoomToBoundingBox(
-          BoundingBox.fromGeoPoints(geoPoints),
-          paddinInPixel: 50,
-        );
-      }
-    }
-
-    return OSMFlutter(
-      controller: _mapController,
-      osmOption: const OSMOption(
-        zoomOption: ZoomOption(initZoom: 12),
-        userTrackingOption: UserTrackingOption(
-          enableTracking: true,
-          unFollowUser: false,
-        ),
-      ),
-      // Callback ini dipanggil ketika map sudah siap
-      onMapIsReady: (isReady) {
-        if (isReady) {
-          _addFacilityMarkers();
-        }
-      },
-      onGeoPointClicked: (point) {
-        final facility = _facilities.firstWhere(
-          (f) => f.latitude == point.latitude && f.longitude == point.longitude,
-        );
-
-        if (facility != null) {
-          showDialog(
-            context: context,
-            builder: (context) => PointerInterceptor(
-              child: AlertDialog(
-                title: Text(facility.name),
-                content: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    if (facility.address.isNotEmpty)
-                      Text('Address: ${facility.address}'),
-                    if (facility.phone.isNotEmpty)
-                      Text('Phone: ${facility.phone}'),
-                    if (facility.distance.isNotEmpty)
-                      Text('Distance: ${facility.distance}'),
-                    if (facility.rating != 0)
-                      Text('Rating: ${facility.rating}'),
-                  ],
-                ),
-                actions: [
-                  TextButton(
-                    onPressed: () => Navigator.pop(context),
-                    child: const Text('Close'),
-                  ),
-                ],
-              ),
-            ),
-          );
-        }
-      },
-    );
-  }
-
-  Widget _buildFacilitiesList() {
-    // Filter facilities based on selected filter
-    List<Facility> filteredFacilities = _selectedFilter == 'Semua'
-        ? _facilities
-        : _facilities
-              .where((facility) => facility.type == _selectedFilter)
-              .toList();
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const SizedBox(height: 16),
+          // Toggle Pencarian & Filter Chips
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
-                'Faskes Terdekat',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.textDark,
-                ),
-              ),
-              TextButton(
-                onPressed: () {
-                  // TODO: Show all facilities
-                },
-                child: const Text('Lihat Semua'),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-
-          // Facilities Cards
-          Expanded(
-            child: ListView.builder(
-              shrinkWrap: true,
-              // physics: const NeverScrollableScrollPhysics(),
-              itemCount: filteredFacilities.length,
-              itemBuilder: (context, index) {
-                return _buildFacilityCard(filteredFacilities[index]);
-              },
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildFacilityCard(Facility facility) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Header with name and rating
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        facility.name,
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: AppColors.textDark,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Row(
-                        children: [
-                          Icon(
-                            Icons.location_on,
-                            size: 14,
-                            color: AppColors.primary,
-                          ),
-                          const SizedBox(width: 4),
-                          Expanded(
-                            child: Text(
-                              facility.address,
-                              style: const TextStyle(
-                                fontSize: 12,
-                                color: AppColors.textLight,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 4,
-                  ),
+              // Toggle untuk mode pencarian
+              Expanded(
+                child: Container(
+                  height: 40,
                   decoration: BoxDecoration(
-                    color: _getRatingColor(facility.rating),
-                    borderRadius: BorderRadius.circular(12),
+                    color: Colors.grey[200],
+                    borderRadius: BorderRadius.circular(20),
                   ),
                   child: Row(
-                    mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(Icons.star, color: Colors.white, size: 14),
-                      const SizedBox(width: 4),
-                      Text(
-                        facility.rating.toString(),
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 12,
+                      Expanded(
+                        child: GestureDetector(
+                          onTap: () {
+                            if (_isMedicineSearchMode) {
+                              setState(() {
+                                _isMedicineSearchMode = false;
+                                _searchQuery = '';
+                              });
+                              _applyFilters();
+                            }
+                          },
+                          child: Container(
+                            height: 36,
+                            alignment: Alignment.center,
+                            decoration: BoxDecoration(
+                              color: !_isMedicineSearchMode
+                                  ? AppColors.primary
+                                  : Colors.transparent,
+                              borderRadius: BorderRadius.circular(18),
+                            ),
+                            child: Text(
+                              'Cari Faskes',
+                              style: TextStyle(
+                                color: !_isMedicineSearchMode
+                                    ? Colors.white
+                                    : AppColors.textDark,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                      Expanded(
+                        child: GestureDetector(
+                          onTap: () {
+                            if (!_isMedicineSearchMode) {
+                              setState(() {
+                                _isMedicineSearchMode = true;
+                                _searchQuery = '';
+                              });
+                              _applyFilters();
+                            }
+                          },
+                          child: Container(
+                            height: 36,
+                            alignment: Alignment.center,
+                            decoration: BoxDecoration(
+                              color: _isMedicineSearchMode
+                                  ? AppColors.primary
+                                  : Colors.transparent,
+                              borderRadius: BorderRadius.circular(18),
+                            ),
+                            child: Text(
+                              'Cari Obat',
+                              style: TextStyle(
+                                color: _isMedicineSearchMode
+                                    ? Colors.white
+                                    : AppColors.textDark,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ),
                         ),
                       ),
                     ],
                   ),
                 ),
-              ],
-            ),
+              ),
+            ],
+          ),
 
+          // Filter Chips untuk Faskes (hanya muncul di mode Cari Faskes)
+          if (!_isMedicineSearchMode) ...[
             const SizedBox(height: 12),
+            SizedBox(
+              height: 40,
+              child: ListView.builder(
+                scrollDirection: Axis.horizontal,
+                itemCount: _facilityTypeFilters.length,
+                itemBuilder: (context, index) {
+                  final filter = _facilityTypeFilters[index];
+                  final isSelected = filter == _selectedFilter;
 
-            // Type, distance, and open time
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 4,
-                  ),
-                  decoration: BoxDecoration(
-                    color: _getTypeColor(facility.type),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Text(
-                    facility.type,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 10,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Icon(Icons.directions_walk, size: 16, color: AppColors.primary),
-                const SizedBox(width: 4),
-                Text(
-                  facility.distance,
-                  style: const TextStyle(
-                    fontSize: 12,
-                    color: AppColors.textLight,
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Icon(Icons.access_time, size: 16, color: AppColors.textLight),
-                const SizedBox(width: 4),
-                Text(
-                  'Buka: ${facility.openTime}',
-                  style: const TextStyle(
-                    fontSize: 12,
-                    color: AppColors.textLight,
-                  ),
-                ),
-              ],
-            ),
-
-            const SizedBox(height: 12),
-
-            // Services
-            Text(
-              'Layanan: ${facility.services.join(', ')}',
-              style: const TextStyle(fontSize: 12, color: AppColors.textLight),
-            ),
-
-            const SizedBox(height: 12),
-
-            // Action buttons
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton.icon(
-                    icon: const Icon(Icons.call, size: 16),
-                    label: const Text('Hubungi'),
-                    onPressed: () {
-                      _makePhoneCall(facility.phone);
-                    },
-                    style: OutlinedButton.styleFrom(
-                      side: const BorderSide(color: AppColors.primary),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: ElevatedButton.icon(
-                    icon: const Icon(Icons.directions, size: 16),
-                    label: const Text('Navigasi'),
-                    onPressed: () {
-                      _openMapsNavigation(facility);
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primary,
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                    ),
-                  ),
-                ),
-              ],
+                  return Padding(
+                    padding: const EdgeInsets.only(right: 8),
+                    child: _buildFilterChip(filter, isSelected),
+                  );
+                },
+              ),
             ),
           ],
-        ),
+
+          // Informasi mode pencarian obat
+          if (_isMedicineSearchMode) ...[
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.blue.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.blue.withOpacity(0.3)),
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Icon(Icons.info_outline, color: Colors.blue, size: 20),
+                  const SizedBox(width: 12),
+                  const Expanded(
+                    child: Text(
+                      'Menampilkan apotek yang mungkin menyediakan obat yang Anda cari. Mohon konfirmasi ketersediaan obat ke apotek.',
+                      style: TextStyle(fontSize: 12, color: Colors.blue),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ],
       ),
     );
   }
 
-  Color _getRatingColor(double rating) {
-    if (rating >= 4.5) return Colors.green;
-    if (rating >= 4.0) return Colors.orange;
-    return Colors.red;
-  }
-
-  Color _getTypeColor(String type) {
-    switch (type) {
-      case 'Rumah Sakit':
-        return Colors.red;
-      case 'Klinik':
-        return Colors.blue;
-      case 'Puskesmas':
-        return Colors.green;
-      case 'Apotek':
-        return Colors.purple;
-      default:
-        return Colors.grey;
-    }
-  }
-
-  void _showFacilityDetails(Facility facility) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      builder: (context) => DraggableScrollableSheet(
-        initialChildSize: 0.7,
-        minChildSize: 0.5,
-        maxChildSize: 0.9,
-        builder: (context, scrollController) => Container(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                facility.name,
-                style: const TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.textDark,
-                ),
+  Widget _buildFilterChip(String filter, bool isSelected) {
+    return GestureDetector(
+      onTap: () {
+        _selectedFilter = filter;
+        _applyFilters();
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        decoration: BoxDecoration(
+          color: isSelected ? AppColors.primary : Colors.grey[200],
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            if (isSelected)
+              BoxShadow(
+                color: AppColors.primary.withOpacity(0.3),
+                blurRadius: 6,
+                offset: const Offset(0, 3),
               ),
-              const SizedBox(height: 16),
-
-              Text(
-                facility.address,
-                style: const TextStyle(
-                  fontSize: 16,
-                  color: AppColors.textLight,
-                ),
-              ),
-              const SizedBox(height: 16),
-
-              Row(
-                children: [
-                  const Icon(Icons.phone, color: AppColors.primary),
-                  const SizedBox(width: 8),
-                  Text(
-                    facility.phone,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      color: AppColors.textDark,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-
-              Text(
-                'Jam Buka: ${facility.openTime}',
-                style: const TextStyle(
-                  fontSize: 16,
-                  color: AppColors.textLight,
-                ),
-              ),
-              const SizedBox(height: 16),
-
-              Text(
-                'Layanan: ${facility.services.join(', ')}',
-                style: const TextStyle(
-                  fontSize: 16,
-                  color: AppColors.textLight,
-                ),
-              ),
-              const SizedBox(height: 24),
-
-              Row(
-                children: [
-                  Expanded(
-                    child: ElevatedButton(
-                      onPressed: () {
-                        _makePhoneCall(facility.phone);
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primary,
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                      ),
-                      child: const Text('Hubungi'),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: () {
-                        _openMapsNavigation(facility);
-                      },
-                      style: OutlinedButton.styleFrom(
-                        side: const BorderSide(color: AppColors.primary),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                      ),
-                      child: const Text('Navigasi'),
-                    ),
-                  ),
-                ],
-              ),
-            ],
+          ],
+        ),
+        child: Text(
+          filter,
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+            color: isSelected ? Colors.white : AppColors.textDark,
           ),
         ),
       ),
     );
   }
 
-  void _makePhoneCall(String phone) {
-    // TODO: Implement phone call functionality
-    print('Calling $phone');
+  Widget _buildEmptyState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            _isMedicineSearchMode ? Icons.medical_services : Icons.search_off,
+            size: 64,
+            color: AppColors.textLight,
+          ),
+          const SizedBox(height: 16),
+          Text(
+            _isMedicineSearchMode
+                ? 'Tidak ada apotek yang menyediakan obat ini.'
+                : 'Tidak ada faskes ditemukan.',
+            style: const TextStyle(
+              fontSize: 16,
+              color: AppColors.textLight,
+              fontWeight: FontWeight.w500,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Coba ubah filter atau kata kunci pencarian Anda',
+            style: const TextStyle(
+              fontSize: 14,
+              color: AppColors.textLight,
+            ),
+          ),
+        ],
+      ),
+    );
   }
-
-  void _openMapsNavigation(Facility facility) {
-    // TODO: Open in external map app or implement navigation
-    print('Navigating to ${facility.name}');
-  }
-
-  void _getCurrentLocation() {
-    // TODO: Get current location
-    print('Getting current location');
-  }
-}
-
-class Facility {
-  final String id;
-  final String name;
-  final String address;
-  final double latitude;
-  final double longitude;
-  final String phone;
-  final String distance;
-  final double rating;
-  final String openTime;
-  final String type;
-  final List<String> services;
-
-  Facility({
-    required this.id,
-    required this.name,
-    required this.address,
-    required this.latitude,
-    required this.longitude,
-    required this.phone,
-    required this.distance,
-    required this.rating,
-    required this.openTime,
-    required this.type,
-    required this.services,
-  });
 }

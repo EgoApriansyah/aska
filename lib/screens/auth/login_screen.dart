@@ -7,7 +7,7 @@ import '../../services/auth_service.dart';
 import '../../widgets/common/aska_logo_widget.dart';
 
 class LoginScreen extends StatefulWidget {
-  const LoginScreen({Key? key}) : super(key: key);
+  const LoginScreen({super.key});
 
   @override
   State<LoginScreen> createState() => _LoginScreenState();
