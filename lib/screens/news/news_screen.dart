@@ -202,7 +202,7 @@ class _NewsScreenState extends State<NewsScreen> {
 
                 // Title
                 const Text(
-                  'Layanan Prima bagi Peserta Antarkan BPJS Kesehatan Raih Apresiasi Internasional',
+                  'BPJS Ketenagakerjaan Sosialisasikan Program BPU untuk Pekerja Informal',
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
@@ -222,7 +222,7 @@ class _NewsScreenState extends State<NewsScreen> {
                     ),
                     const SizedBox(width: 4),
                     Text(
-                      '13 November 2025',
+                      '12 November 2025',
                       style: TextStyle(
                         color: AppColors.textLight,
                         fontSize: 14,
@@ -236,7 +236,7 @@ class _NewsScreenState extends State<NewsScreen> {
                     ),
                     const SizedBox(width: 4),
                     Text(
-                      'London, Inggris',
+                      'Jakarta',
                       style: TextStyle(
                         color: AppColors.textLight,
                         fontSize: 14,
@@ -249,7 +249,7 @@ class _NewsScreenState extends State<NewsScreen> {
 
                 // Preview Text
                 Text(
-                  'BPJS Kesehatan berhasil meraih penghargaan "Best Employee Driven CX" dalam ajang ICXA 2025 yang diselenggarakan di London...',
+                  'BPJS Ketenagakerjaan menggelar kegiatan sosialisasi mengenai Program Bukan Penerima Upah (BPU) yang ditujukan bagi para pekerja informal seperti petani, nelayan, tukang ojek, pedagang, atlet, dan pelaku usaha kecil lainnya...',
                   style: TextStyle(
                     color: AppColors.textLight,
                     fontSize: 14,

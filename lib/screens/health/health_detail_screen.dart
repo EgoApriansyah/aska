@@ -1,3 +1,5 @@
+import 'package:aska/services/report_service.dart';
+import 'package:aska/services/share_service.dart';
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import '../../constants/app_colors.dart';
@@ -167,14 +169,79 @@ class _HealthDetailScreenState extends State<HealthDetailScreen>
         actions: [
           IconButton(
             icon: const Icon(Icons.share),
-            onPressed: () {
-              // TODO: Share health data
+            onPressed: () async {
+              try {
+                // Show loading
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Mempersiapkan data untuk dibagikan...'),
+                    duration: Duration(seconds: 1),
+                  ),
+                );
+
+                await ShareService.shareHealthData(
+                  healthScore: 85, // Ganti dengan data aktual
+                  heartRate: 72,
+                  bloodPressure: '120/80',
+                  temperature: 36.5,
+                  oxygenSaturation: 98,
+                  steps: 12457,
+                  sleepMinutes: 452,
+                  stressLevel: 4,
+                  period: _selectedPeriod,
+                );
+              } catch (e) {
+                // Error message
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Gagal berbagi: $e'),
+                    backgroundColor: Colors.red,
+                  ),
+                );
+              }
             },
           ),
+
           IconButton(
             icon: const Icon(Icons.download),
-            onPressed: () {
-              // TODO: Download health report
+            onPressed: () async {
+              try {
+                // Show loading
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Membuat laporan kesehatan...'),
+                    duration: Duration(seconds: 2),
+                  ),
+                );
+
+                await ReportService.downloadHealthReport(
+                  healthScore: 85, // Ganti dengan data aktual
+                  heartRate: 72,
+                  bloodPressure: '120/80',
+                  temperature: 36.5,
+                  oxygenSaturation: 98,
+                  steps: 12457,
+                  sleepMinutes: 452,
+                  stressLevel: 4,
+                  period: _selectedPeriod,
+                );
+
+                // Success message
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Laporan berhasil didownload!'),
+                    backgroundColor: Colors.green,
+                  ),
+                );
+              } catch (e) {
+                // Error message
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Error: $e'),
+                    backgroundColor: Colors.red,
+                  ),
+                );
+              }
             },
           ),
         ],
@@ -259,7 +326,7 @@ class _HealthDetailScreenState extends State<HealthDetailScreen>
             ),
           ),
           ElevatedButton(
-            onPressed: _navigateToHealthFacility,
+            onPressed: () => Navigator.pushNamed(context, '/facilities'),
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.red,
               foregroundColor: Colors.white,
