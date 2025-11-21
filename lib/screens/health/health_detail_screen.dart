@@ -21,10 +21,16 @@ class _HealthDetailScreenState extends State<HealthDetailScreen>
   bool _isAnalyzing = false;
   List<Map<String, dynamic>> _weeklyData = [];
 
+  // Health score variable - bisa diganti untuk testing
+  int _healthScore = 85; // Ganti ke < 50 untuk test tombol faskes
+
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this);
+    _tabController = TabController(
+      length: 2,
+      vsync: this,
+    ); // Kurangi jadi 2 tab saja
     _loadDummyData();
   }
 
@@ -98,7 +104,7 @@ class _HealthDetailScreenState extends State<HealthDetailScreen>
 
     try {
       final analysis = await HealthAnalysisService.generateHealthAnalysis(
-        healthScore: 85,
+        healthScore: _healthScore,
         heartRate: 72,
         bloodPressure: '120/80',
         temperature: 36.5,
@@ -121,6 +127,32 @@ class _HealthDetailScreenState extends State<HealthDetailScreen>
         _isAnalyzing = false;
       });
     }
+  }
+
+  void _navigateToHealthFacility() {
+    // TODO: Implement navigation to health facility
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Pergi ke Faskes Terdekat'),
+        content: const Text(
+          'Skor kesehatan Anda rendah. Disarankan untuk berkonsultasi dengan tenaga medis.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Tutup'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              // TODO: Open maps or facility list
+            },
+            child: const Text('Cari Faskes'),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -160,6 +192,12 @@ class _HealthDetailScreenState extends State<HealthDetailScreen>
             // Overall Health Score
             _buildHealthScoreCard(),
 
+            // Tombol Faskes jika skor < 50
+            if (_healthScore < 50) ...[
+              const SizedBox(height: 16),
+              _buildHealthFacilityButton(),
+            ],
+
             const SizedBox(height: 20),
 
             // Vitals Section
@@ -167,8 +205,13 @@ class _HealthDetailScreenState extends State<HealthDetailScreen>
 
             const SizedBox(height: 20),
 
-            // Health Metrics Tabs
+            // Health Metrics Tabs (Hanya Grafik & Riwayat)
             _buildHealthMetricsTabs(),
+
+            const SizedBox(height: 20),
+
+            // AI Analysis Section (Dipindah ke bawah)
+            _buildAIAnalysisSection(),
 
             const SizedBox(height: 20),
 
@@ -181,6 +224,49 @@ class _HealthDetailScreenState extends State<HealthDetailScreen>
             _buildRecommendations(),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildHealthFacilityButton() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.red[50],
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.red.withOpacity(0.3)),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.warning, color: Colors.red[700]),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Perhatian! Skor Kesehatan Rendah',
+                  style: TextStyle(
+                    color: Colors.red[700],
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const Text(
+                  'Disarankan untuk berkonsultasi dengan tenaga medis',
+                  style: TextStyle(fontSize: 12, color: Colors.red),
+                ),
+              ],
+            ),
+          ),
+          ElevatedButton(
+            onPressed: _navigateToHealthFacility,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Faskes Terdekat'),
+          ),
+        ],
       ),
     );
   }
@@ -218,7 +304,9 @@ class _HealthDetailScreenState extends State<HealthDetailScreen>
               value: _selectedPeriod,
               underline: const SizedBox(),
               isDense: true,
-              items: ['Hari Ini', 'Minggu Ini', 'Bulan Ini', 'Tahun Ini'].map((period) {
+              items: ['Hari Ini', 'Minggu Ini', 'Bulan Ini', 'Tahun Ini'].map((
+                period,
+              ) {
                 return DropdownMenuItem(value: period, child: Text(period));
               }).toList(),
               onChanged: (value) {
@@ -273,26 +361,32 @@ class _HealthDetailScreenState extends State<HealthDetailScreen>
                   height: 150,
                   width: 150,
                   child: CircularProgressIndicator(
-                    value: 0.85,
+                    value: _healthScore / 100,
                     strokeWidth: 12,
                     backgroundColor: Colors.white.withOpacity(0.3),
-                    valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
+                    valueColor: AlwaysStoppedAnimation<Color>(
+                      _healthScore >= 70 ? Colors.white : Colors.orange,
+                    ),
                   ),
                 ),
                 Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Text(
-                      '85',
-                      style: TextStyle(
+                    Text(
+                      '$_healthScore',
+                      style: const TextStyle(
                         color: Colors.white,
                         fontSize: 36,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                    const Text(
-                      'Baik',
-                      style: TextStyle(color: Colors.white, fontSize: 16),
+                    Text(
+                      _healthScore >= 70
+                          ? 'Baik'
+                          : _healthScore >= 50
+                          ? 'Cukup'
+                          : 'Perhatian',
+                      style: const TextStyle(color: Colors.white, fontSize: 16),
                     ),
                   ],
                 ),
@@ -490,7 +584,7 @@ class _HealthDetailScreenState extends State<HealthDetailScreen>
       ),
       child: Column(
         children: [
-          // Tab Bar
+          // Tab Bar (Hanya 2 tab sekarang)
           TabBar(
             controller: _tabController,
             labelColor: AppColors.primary,
@@ -499,7 +593,6 @@ class _HealthDetailScreenState extends State<HealthDetailScreen>
             tabs: const [
               Tab(text: 'Grafik'),
               Tab(text: 'Riwayat'),
-              Tab(text: 'AI Analysis'),
             ],
           ),
 
@@ -508,11 +601,7 @@ class _HealthDetailScreenState extends State<HealthDetailScreen>
             height: 400,
             child: TabBarView(
               controller: _tabController,
-              children: [
-                _buildChartTab(),
-                _buildHistoryTab(),
-                _buildAIAnalysisTab(),
-              ],
+              children: [_buildChartTab(), _buildHistoryTab()],
             ),
           ),
         ],
@@ -526,113 +615,156 @@ class _HealthDetailScreenState extends State<HealthDetailScreen>
       child: Column(
         children: [
           // Heart Rate Chart
-          _buildMetricChart('Detak Jantung (7 hari terakhir)', [72, 75, 71, 73, 74, 72, 73], Colors.red),
-
+          _buildMetricChart('Detak Jantung (7 hari terakhir)', [
+            72,
+            75,
+            71,
+            73,
+            74,
+            72,
+            73,
+          ], Colors.red),
           const SizedBox(height: 30),
-
-          // Steps Chart
-          _buildMetricChart('Langkah Harian (7 hari terakhir)', [8234, 9456, 7123, 8678, 9234, 5678, 6345], Colors.green),
+          // Steps Chart - FIXED
+          _buildMetricChart('Langkah Harian (7 hari terakhir)', [
+            8234,
+            9456,
+            7123,
+            8678,
+            9234,
+            5678,
+            6345,
+          ], Colors.green),
         ],
       ),
     );
   }
 
   Widget _buildMetricChart(String title, List<double> data, Color color) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          title,
-          style: const TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.bold,
-            color: AppColors.textDark,
-          ),
-        ),
-        const SizedBox(height: 12),
-        SizedBox(
-          height: 80,
-          child: LineChart(
-            LineChartData(
-              gridData: FlGridData(
-                show: true,
-                drawVerticalLine: false,
-                horizontalInterval: 10,
-                getDrawingHorizontalLine: (value) {
-                  return FlLine(
-                    color: const Color.fromARGB(255, 255, 255, 255).withOpacity(0.3),
-                    strokeWidth: 1,
-                  );
-                },
-              ),
-              borderData: FlBorderData(
-                show: true,
-                border: Border.all(color: Colors.grey.withOpacity(0.3)),
-              ),
-              titlesData: FlTitlesData(
-                show: true,
-                leftTitles: AxisTitles(
-                  sideTitles: SideTitles(
-                    showTitles: true,
-                    reservedSize: 40,
-                    interval: 10,
-                    getTitlesWidget: (value, meta) {
-                      return Text(
-                        value.toInt().toString(),
-                        style: const TextStyle(
-                          fontSize: 10,
-                          color: Colors.grey,
-                        ),
-                      );
-                    },
-                  ),
-                ),
-                bottomTitles: AxisTitles(
-                  sideTitles: SideTitles(
-                    showTitles: true,
-                    getTitlesWidget: (value, meta) {
-                      const days = ['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min'];
-                      return Text(
-                        days[value.toInt()],
-                        style: const TextStyle(
-                          fontSize: 10,
-                          color: Colors.grey,
-                        ),
-                      );
-                    },
-                  ),
-                ),
-                topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-              ),
-              lineBarsData: [
-                LineChartBarData(
-                  spots: data.asMap().entries.map((e) => FlSpot(e.key.toDouble(), e.value)).toList(),
-                  isCurved: true,
-                  color: color,
-                  barWidth: 3,
-                  isStrokeCapRound: true,
-                  dotData: FlDotData(
-                    show: true,
-                    getDotPainter: (spot, percent, barData, index) {
-                      return FlDotCirclePainter(
-                        radius: 3,
-                        color: color,
-                        strokeWidth: 0,
-                      );
-                    },
-                  ),
-                ),
-              ],
-              minX: 0,
-              maxX: 6,
-              minY: data.reduce((a, b) => a < b ? a : b) - 10,
-              maxY: data.reduce((a, b) => a > b ? a : b) + 10,
+    return Container(
+      margin: const EdgeInsets.only(bottom: 20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: const TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.bold,
+              color: AppColors.textDark,
             ),
           ),
-        ),
-      ],
+          const SizedBox(height: 12),
+          Container(
+            height: 80,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: LineChart(
+              LineChartData(
+                backgroundColor: Colors.white,
+                gridData: FlGridData(
+                  show: true,
+                  drawVerticalLine: false,
+                  horizontalInterval: _calculateInterval(
+                    data,
+                  ), // Interval dinamis
+                  getDrawingHorizontalLine: (value) {
+                    return FlLine(
+                      color: Colors.grey.withOpacity(0.1), // LEBIH TERANG
+                      strokeWidth: 0.5, // LEBIH TIPIS
+                    );
+                  },
+                ),
+                borderData: FlBorderData(
+                  show: false, // MATIKAN BORDER - INI PENYEBAB HITAM
+                ),
+                titlesData: FlTitlesData(
+                  show: true,
+                  leftTitles: const AxisTitles(
+                    sideTitles: SideTitles(showTitles: false),
+                  ),
+                  bottomTitles: AxisTitles(
+                    sideTitles: SideTitles(
+                      showTitles: true,
+                      getTitlesWidget: (value, meta) {
+                        const days = [
+                          'Sen',
+                          'Sel',
+                          'Rab',
+                          'Kam',
+                          'Jum',
+                          'Sab',
+                          'Min',
+                        ];
+                        return Padding(
+                          padding: const EdgeInsets.only(top: 4.0),
+                          child: Text(
+                            days[value.toInt()],
+                            style: const TextStyle(
+                              fontSize: 10,
+                              color: Colors.grey,
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                  topTitles: const AxisTitles(
+                    sideTitles: SideTitles(showTitles: false),
+                  ),
+                  rightTitles: const AxisTitles(
+                    sideTitles: SideTitles(showTitles: false),
+                  ),
+                ),
+                lineBarsData: [
+                  LineChartBarData(
+                    spots: data
+                        .asMap()
+                        .entries
+                        .map((e) => FlSpot(e.key.toDouble(), e.value))
+                        .toList(),
+                    isCurved: true,
+                    color: color,
+                    barWidth: 3,
+                    isStrokeCapRound: true,
+                    belowBarData: BarAreaData(show: false),
+                    dotData: FlDotData(
+                      show: true,
+                      getDotPainter: (spot, percent, barData, index) {
+                        return FlDotCirclePainter(
+                          radius: 3,
+                          color: color,
+                          strokeWidth: 2,
+                          strokeColor: Colors.white,
+                        );
+                      },
+                    ),
+                  ),
+                ],
+                minX: 0,
+                maxX: 6,
+                minY: data.reduce((a, b) => a < b ? a : b) - 10,
+                maxY: data.reduce((a, b) => a > b ? a : b) + 10,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
+  }
+
+  // Helper function untuk menghitung interval yang sesuai
+  double _calculateInterval(List<double> data) {
+    final maxVal = data.reduce((a, b) => a > b ? a : b);
+    final minVal = data.reduce((a, b) => a < b ? a : b);
+    final range = maxVal - minVal;
+
+    if (range > 1000) return 2000; // Untuk data steps
+    if (range > 100) return 50; // Untuk data besar
+    if (range > 10) return 10; // Untuk data sedang
+    return 5; // Untuk data kecil
   }
 
   Widget _buildHistoryTab() {
@@ -672,21 +804,14 @@ class _HealthDetailScreenState extends State<HealthDetailScreen>
       ),
       child: Row(
         children: [
-          // Date
           SizedBox(
             width: 40,
             child: Text(
               date,
-              style: const TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.bold,
-              ),
+              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
             ),
           ),
-
           const SizedBox(width: 16),
-
-          // Metrics
           Expanded(
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -716,80 +841,107 @@ class _HealthDetailScreenState extends State<HealthDetailScreen>
     );
   }
 
-  Widget _buildAIAnalysisTab() {
-    return Padding(
-      padding: const EdgeInsets.all(20),
-      child: Column(
-        children: [
-          // Button untuk generate analysis
-          ElevatedButton(
-            onPressed: _isAnalyzing ? null : _getAIAnalysis,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.primary,
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
+  // AI Analysis Section yang dipindah ke bawah
+  Widget _buildAIAnalysisSection() {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Analisis AI',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: AppColors.textDark,
               ),
             ),
-            child: _isAnalyzing
-                ? const SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                    ),
-                  )
-                : const Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(Icons.auto_awesome, size: 20),
-                      SizedBox(width: 8),
-                      Text('Dapatkan Analisis AI'),
-                    ],
+            const SizedBox(height: 16),
+
+            // Button untuk generate analysis
+            Center(
+              child: ElevatedButton(
+                onPressed: _isAnalyzing ? null : _getAIAnalysis,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 24,
+                    vertical: 12,
                   ),
-          ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                child: _isAnalyzing
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            Colors.white,
+                          ),
+                        ),
+                      )
+                    : const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.auto_awesome, size: 20),
+                          SizedBox(width: 8),
+                          Text('Dapatkan Analisis AI'),
+                        ],
+                      ),
+              ),
+            ),
 
-          const SizedBox(height: 20),
+            const SizedBox(height: 20),
 
-          // Hasil Analisis AI
-          Expanded(
-            child: _aiAnalysis.isEmpty
+            // Hasil Analisis AI
+            _aiAnalysis.isEmpty
                 ? const Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Icon(Icons.auto_awesome, size: 48, color: Colors.grey),
                       SizedBox(height: 16),
                       Text(
-                        'Klik tombol di atas untuk mendapatkan\nanalisis kesehatan mendalam dari AI',
+                        'Klik tombol di atas untuk mendapatkan analisis kesehatan dari AI',
                         textAlign: TextAlign.center,
                         style: TextStyle(color: Colors.grey, fontSize: 14),
                       ),
                     ],
                   )
-                : SingleChildScrollView(
-                    child: Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: AppColors.primary.withOpacity(0.05),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: AppColors.primary.withOpacity(0.2),
-                        ),
+                : Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary.withOpacity(0.05),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: AppColors.primary.withOpacity(0.2),
                       ),
-                      child: Text(
-                        _aiAnalysis,
-                        style: const TextStyle(
-                          fontSize: 14,
-                          height: 1.6,
-                          color: AppColors.textDark,
-                        ),
+                    ),
+                    child: Text(
+                      _aiAnalysis,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        height: 1.6,
+                        color: AppColors.textDark,
                       ),
                     ),
                   ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

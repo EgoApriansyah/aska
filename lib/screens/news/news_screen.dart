@@ -158,7 +158,7 @@ class _NewsScreenState extends State<NewsScreen> {
           ClipRRect(
             borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
             child: Image.asset(
-              'assets/images/news_featured.png',
+              'assets/images/news_featured.jpg',
               height: 200,
               width: double.infinity,
               fit: BoxFit.cover,
@@ -306,7 +306,7 @@ class _NewsScreenState extends State<NewsScreen> {
         _buildNewsItem(
           'Lindungi Kesehatan Keluarga, Frans Bersyukur Ada Program JKN',
           '2 hari yang lalu',
-          'assets/images/news_1.png',
+          'assets/images/news_1.jpg',
         ),
 
         const SizedBox(height: 12),
@@ -314,7 +314,7 @@ class _NewsScreenState extends State<NewsScreen> {
         _buildNewsItem(
           'BPJS Kesehatan Sidoarjo Ajak Bayar Iuran Tepat Waktu',
           '1 minggu yang lalu',
-          'assets/images/news_2.png',
+          'assets/images/news_2.jpg',
         ),
 
         const SizedBox(height: 12),
@@ -322,7 +322,7 @@ class _NewsScreenState extends State<NewsScreen> {
         _buildNewsItem(
           'Perkuat Literasi JKN, BPJS Kesehatan Sidoarjo Kenalkan Layanan Digital kepada Mahasiswa',
           '2 minggu yang lalu',
-          'assets/images/news_3.png',
+          'assets/images/news_3.jpg',
         ),
       ],
     );

@@ -331,7 +331,8 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                       horizontal: 16.0,
                       vertical: 12.0,
                     ),
-                    child: Stack(
+                    child: 
+                    Stack(
                       clipBehavior: Clip.none,
                       children: [
                         // Lingkaran putih + icon

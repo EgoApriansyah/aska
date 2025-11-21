@@ -63,7 +63,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           ),
                           const SizedBox(height: 4),
                           const Text(
-                            'naufalwafi@email.com',
+                            'naufalwafi@gmail.com',
                             style: TextStyle(
                               fontSize: 14,
                               color: AppColors.textLight,
