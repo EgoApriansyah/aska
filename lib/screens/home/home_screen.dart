@@ -64,23 +64,8 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
 
             const SizedBox(height: 24),
 
-            // Health Status
-            _buildHealthStatus(),
-
-            const SizedBox(height: 24),
-
-            // Services Section
-            _buildServicesSection(),
-
-            const SizedBox(height: 24),
-
             // Recent Activities
             _buildRecentActivities(),
-
-            const SizedBox(height: 24),
-
-            // Health Tips
-            _buildHealthTips(),
 
             const SizedBox(height: 24),
 
@@ -911,7 +896,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
             children: [
               _buildQuickAction(
                 Icons.local_hospital,
-                'Faskes',
+                'Peta Sehat',
                 () => Navigator.pushNamed(context, '/facilities'),
               ),
               _buildQuickAction(
@@ -1227,7 +1212,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             const Text(
-              'Aktivitas Terkini',
+              'Riwayat Layanan',
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
@@ -1250,17 +1235,17 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
           itemBuilder: (context, index) {
             return _buildActivityCard(
               [
-                'Kunjungan ke RSUD Cibabat',
-                'Cek Darah Rutin',
-                'Konsultasi Online',
+                'RSUD',
+                'dr. ARMADA',
+                'RS MEDIKA STANIA',
               ][index],
               [
                 '2 hari yang lalu',
                 '1 minggu yang lalu',
                 '2 minggu yang lalu',
               ][index],
-              [Icons.local_hospital, Icons.science, Icons.video_call][index],
-              [Colors.blue, Colors.green, Colors.purple][index],
+              [Icons.local_hospital, Icons.local_hospital, Icons.local_hospital][index],
+              [Colors.blue, Colors.blue, Colors.blue][index],
             );
           },
         ),
@@ -1323,60 +1308,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
           Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey[400]),
         ],
       ),
-    );
-  }
-
-  Widget _buildHealthTips() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          'Tips Kesehatan',
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-            color: AppColors.textDark,
-          ),
-        ),
-        const SizedBox(height: 16),
-        Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [Colors.orange[400]!, Colors.orange[300]!],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Row(
-            children: [
-              const Icon(Icons.lightbulb, color: Colors.white, size: 40),
-              const SizedBox(width: 16),
-              const Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Tips Hari Ini',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
-                    ),
-                    SizedBox(height: 4),
-                    Text(
-                      'Minum 8 gelas air putih setiap hari untuk menjaga tubuh tetap terhidrasi dengan baik.',
-                      style: TextStyle(fontSize: 14, color: Colors.white),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
     );
   }
 

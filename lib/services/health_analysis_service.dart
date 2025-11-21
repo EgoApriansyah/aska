@@ -1,7 +1,7 @@
 import 'package:flutter_gemini/flutter_gemini.dart';
 
 class HealthAnalysisService {
-  static const String _apiKey = 'AIzaSyAS1H4mMZbgVqowCH_mYZAmJFh-hfgUPgA';
+  static const String _apiKey = 'AIzaSyAJsKefFrj8md0z180-co5mu81FjbeL_GQ';
   
   static bool _isInitialized = false;
 

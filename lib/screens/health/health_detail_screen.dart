@@ -24,7 +24,7 @@ class _HealthDetailScreenState extends State<HealthDetailScreen>
   List<Map<String, dynamic>> _weeklyData = [];
 
   // Health score variable - bisa diganti untuk testing
-  int _healthScore = 85; // Ganti ke < 50 untuk test tombol faskes
+  int _healthScore = 45; // Ganti ke < 50 untuk test tombol faskes
 
   @override
   void initState() {
@@ -279,16 +279,6 @@ class _HealthDetailScreenState extends State<HealthDetailScreen>
 
             // AI Analysis Section (Dipindah ke bawah)
             _buildAIAnalysisSection(),
-
-            const SizedBox(height: 20),
-
-            // Health Insights
-            _buildHealthInsights(),
-
-            const SizedBox(height: 20),
-
-            // Recommendations
-            _buildRecommendations(),
           ],
         ),
       ),
@@ -839,7 +829,7 @@ class _HealthDetailScreenState extends State<HealthDetailScreen>
       padding: const EdgeInsets.all(20),
       child: ListView.builder(
         shrinkWrap: true,
-        physics: const NeverScrollableScrollPhysics(),
+        // physics: const NeverScrollableScrollPhysics(),
         itemCount: _weeklyData.length,
         itemBuilder: (context, index) {
           final data = _weeklyData[index];
