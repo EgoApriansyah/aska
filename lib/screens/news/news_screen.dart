@@ -158,7 +158,7 @@ class _NewsScreenState extends State<NewsScreen> {
           ClipRRect(
             borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
             child: Image.asset(
-              'assets/images/news_featured.png',
+              'assets/images/news_featured.jpg',
               height: 200,
               width: double.infinity,
               fit: BoxFit.cover,
@@ -202,7 +202,7 @@ class _NewsScreenState extends State<NewsScreen> {
 
                 // Title
                 const Text(
-                  'Layanan Prima bagi Peserta Antarkan BPJS Kesehatan Raih Apresiasi Internasional',
+                  'BPJS Ketenagakerjaan Sosialisasikan Program BPU untuk Pekerja Informal',
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
@@ -222,7 +222,7 @@ class _NewsScreenState extends State<NewsScreen> {
                     ),
                     const SizedBox(width: 4),
                     Text(
-                      '13 November 2025',
+                      '12 November 2025',
                       style: TextStyle(
                         color: AppColors.textLight,
                         fontSize: 14,
@@ -236,7 +236,7 @@ class _NewsScreenState extends State<NewsScreen> {
                     ),
                     const SizedBox(width: 4),
                     Text(
-                      'London, Inggris',
+                      'Jakarta',
                       style: TextStyle(
                         color: AppColors.textLight,
                         fontSize: 14,
@@ -249,7 +249,7 @@ class _NewsScreenState extends State<NewsScreen> {
 
                 // Preview Text
                 Text(
-                  'BPJS Kesehatan berhasil meraih penghargaan "Best Employee Driven CX" dalam ajang ICXA 2025 yang diselenggarakan di London...',
+                  'BPJS Ketenagakerjaan menggelar kegiatan sosialisasi mengenai Program Bukan Penerima Upah (BPU) yang ditujukan bagi para pekerja informal seperti petani, nelayan, tukang ojek, pedagang, atlet, dan pelaku usaha kecil lainnya...',
                   style: TextStyle(
                     color: AppColors.textLight,
                     fontSize: 14,
@@ -306,7 +306,7 @@ class _NewsScreenState extends State<NewsScreen> {
         _buildNewsItem(
           'Lindungi Kesehatan Keluarga, Frans Bersyukur Ada Program JKN',
           '2 hari yang lalu',
-          'assets/images/news_1.png',
+          'assets/images/news_1.jpg',
         ),
 
         const SizedBox(height: 12),
@@ -314,7 +314,7 @@ class _NewsScreenState extends State<NewsScreen> {
         _buildNewsItem(
           'BPJS Kesehatan Sidoarjo Ajak Bayar Iuran Tepat Waktu',
           '1 minggu yang lalu',
-          'assets/images/news_2.png',
+          'assets/images/news_2.jpg',
         ),
 
         const SizedBox(height: 12),
@@ -322,7 +322,7 @@ class _NewsScreenState extends State<NewsScreen> {
         _buildNewsItem(
           'Perkuat Literasi JKN, BPJS Kesehatan Sidoarjo Kenalkan Layanan Digital kepada Mahasiswa',
           '2 minggu yang lalu',
-          'assets/images/news_3.png',
+          'assets/images/news_3.jpg',
         ),
       ],
     );

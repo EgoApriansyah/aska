@@ -195,7 +195,10 @@ class _LoginScreenState extends State<LoginScreen> {
               height: 50,
               child: ElevatedButton.icon(
                 icon: Image.asset('assets/images/facebook_logo.png', width: 20),
-                label: const Text('Masuk dengan Facebook'),
+                label: const Text(
+                  'Masuk dengan Facebook',
+                  style: TextStyle(color: Colors.white),
+                ),
                 onPressed: () {},
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF1877F2),
