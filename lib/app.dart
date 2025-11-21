@@ -16,7 +16,7 @@ class App extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: AppColors.primary),
       ),
       // PASTIKAN initialRoute DISET KE initialSplash
-      initialRoute: AppRoutes.facilities,
+      initialRoute: AppRoutes.initialSplash,
       routes: AppRouter.getAllRoutes(),
     );
   }
